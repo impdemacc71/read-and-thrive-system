@@ -1,18 +1,20 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { books as initialBooks, transactions as initialTransactions, Book, Transaction } from '../data/mockData';
+import { resources as initialResources, transactions as initialTransactions, Resource, Transaction } from '../data/mockData';
 import { useToast } from '@/components/ui/use-toast';
 
 interface LibraryContextType {
-  books: Book[];
+  resources: Resource[];
   transactions: Transaction[];
-  borrowBook: (userId: string, bookId: string) => void;
-  returnBook: (transactionId: string) => void;
-  addBook: (book: Omit<Book, 'id'>) => void;
-  searchBooks: (query: string) => Book[];
-  getBookById: (id: string) => Book | undefined;
+  borrowResource: (userId: string, resourceId: string) => void;
+  returnResource: (transactionId: string) => void;
+  addResource: (resource: Omit<Resource, 'id'>) => void;
+  searchResources: (query: string) => Resource[];
+  getResourceById: (id: string) => Resource | undefined;
   getUserTransactions: (userId: string) => Transaction[];
-  getBooksByCategory: (category: string) => Book[];
+  getResourcesByCategory: (category: string) => Resource[];
+  getResourcesByType: (type: string) => Resource[];
+  scanIdentifier: (identifier: string) => Resource | undefined;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -26,17 +28,17 @@ export const useLibrary = () => {
 };
 
 export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const { toast } = useToast();
 
-  const borrowBook = (userId: string, bookId: string) => {
-    // Check if book is available
-    const book = books.find(b => b.id === bookId);
-    if (!book || !book.available) {
+  const borrowResource = (userId: string, resourceId: string) => {
+    // Check if resource is available
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource || !resource.available) {
       toast({
         title: "Error",
-        description: "This book is not available for checkout.",
+        description: "This resource is not available for checkout.",
         variant: "destructive",
       });
       return;
@@ -50,17 +52,17 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
     const newTransaction: Transaction = {
       id: `${transactions.length + 1}`,
       userId,
-      bookId,
+      resourceId,
       checkoutDate,
       dueDate: dueDate.toISOString().split('T')[0],
       returnDate: null,
       status: 'borrowed',
     };
 
-    // Update book availability
-    setBooks(prevBooks =>
-      prevBooks.map(b =>
-        b.id === bookId ? { ...b, available: false } : b
+    // Update resource availability
+    setResources(prevResources =>
+      prevResources.map(r =>
+        r.id === resourceId ? { ...r, available: false } : r
       )
     );
 
@@ -68,12 +70,12 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
     setTransactions(prev => [...prev, newTransaction]);
 
     toast({
-      title: "Book Borrowed",
-      description: `You have successfully borrowed "${book.title}". Due date: ${dueDate.toLocaleDateString()}`,
+      title: "Resource Borrowed",
+      description: `You have successfully borrowed "${resource.title}". Due date: ${dueDate.toLocaleDateString()}`,
     });
   };
 
-  const returnBook = (transactionId: string) => {
+  const returnResource = (transactionId: string) => {
     const transaction = transactions.find(t => t.id === transactionId);
     
     if (!transaction) {
@@ -95,75 +97,99 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
       )
     );
 
-    // Make the book available again
-    setBooks(prevBooks =>
-      prevBooks.map(b =>
-        b.id === transaction.bookId ? { ...b, available: true } : b
+    // Make the resource available again
+    setResources(prevResources =>
+      prevResources.map(r =>
+        r.id === transaction.resourceId ? { ...r, available: true } : r
       )
     );
 
-    const book = books.find(b => b.id === transaction.bookId);
+    const resource = resources.find(r => r.id === transaction.resourceId);
     
     toast({
-      title: "Book Returned",
-      description: `You have successfully returned "${book?.title}".`,
+      title: "Resource Returned",
+      description: `You have successfully returned "${resource?.title}".`,
     });
   };
 
-  const addBook = (bookData: Omit<Book, 'id'>) => {
-    const newBook: Book = {
-      ...bookData,
-      id: `${books.length + 1}`,
+  const addResource = (resourceData: Omit<Resource, 'id'>) => {
+    const newResource: Resource = {
+      ...resourceData,
+      id: `${resources.length + 1}`,
     };
 
-    setBooks(prev => [...prev, newBook]);
+    setResources(prev => [...prev, newResource]);
 
     toast({
-      title: "Book Added",
-      description: `"${bookData.title}" has been added to the library catalog.`,
+      title: "Resource Added",
+      description: `"${resourceData.title}" has been added to the library catalog.`,
     });
   };
 
-  const searchBooks = (query: string): Book[] => {
-    if (!query.trim()) return books;
+  const searchResources = (query: string): Resource[] => {
+    if (!query.trim()) return resources;
     
     const lowerCaseQuery = query.toLowerCase();
-    return books.filter(book =>
-      book.title.toLowerCase().includes(lowerCaseQuery) ||
-      book.author.toLowerCase().includes(lowerCaseQuery) ||
-      book.isbn.includes(lowerCaseQuery) ||
-      book.category.toLowerCase().includes(lowerCaseQuery)
+    return resources.filter(resource =>
+      resource.title.toLowerCase().includes(lowerCaseQuery) ||
+      resource.author.toLowerCase().includes(lowerCaseQuery) ||
+      (resource.isbn && resource.isbn.includes(lowerCaseQuery)) ||
+      (resource.issn && resource.issn.includes(lowerCaseQuery)) ||
+      (resource.doi && resource.doi.includes(lowerCaseQuery)) ||
+      (resource.barcode && resource.barcode.includes(lowerCaseQuery)) ||
+      resource.publisher.toLowerCase().includes(lowerCaseQuery) ||
+      resource.category.toLowerCase().includes(lowerCaseQuery) ||
+      resource.keywords.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
     );
   };
 
-  const getBookById = (id: string): Book | undefined => {
-    return books.find(book => book.id === id);
+  const getResourceById = (id: string): Resource | undefined => {
+    return resources.find(resource => resource.id === id);
   };
 
   const getUserTransactions = (userId: string): Transaction[] => {
     return transactions.filter(transaction => transaction.userId === userId);
   };
 
-  const getBooksByCategory = (category: string): Book[] => {
-    if (category === 'All') return books;
-    return books.filter(book => book.category === category);
+  const getResourcesByCategory = (category: string): Resource[] => {
+    if (category === 'All') return resources;
+    return resources.filter(resource => resource.category === category);
+  };
+
+  const getResourcesByType = (type: string): Resource[] => {
+    if (type === 'All') return resources;
+    return resources.filter(resource => resource.type === type);
+  };
+
+  const scanIdentifier = (identifier: string): Resource | undefined => {
+    // Check different identifiers (ISBN, ISSN, DOI, barcode)
+    return resources.find(
+      resource =>
+        resource.isbn === identifier ||
+        resource.issn === identifier ||
+        resource.doi === identifier ||
+        resource.barcode === identifier
+    );
   };
 
   return (
     <LibraryContext.Provider
       value={{
-        books,
+        resources,
         transactions,
-        borrowBook,
-        returnBook,
-        addBook,
-        searchBooks,
-        getBookById,
+        borrowResource,
+        returnResource,
+        addResource,
+        searchResources,
+        getResourceById,
         getUserTransactions,
-        getBooksByCategory,
+        getResourcesByCategory,
+        getResourcesByType,
+        scanIdentifier,
       }}
     >
       {children}
     </LibraryContext.Provider>
   );
 };
+
