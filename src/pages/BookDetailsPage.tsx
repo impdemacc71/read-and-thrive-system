@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 const BookDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getResourceById, borrowResource } = useLibrary();
+  const { getResourceById, borrowResource, transactions, reserveResource } = useLibrary();
   const { currentUser, isAuthenticated } = useAuth();
   
   const book = id ? getResourceById(id) : undefined;
@@ -24,11 +24,35 @@ const BookDetailsPage = () => {
     );
   }
   
+  // Find if this book has a transaction that shows when it will be available again
+  const bookTransaction = transactions.find(
+    t => t.resourceId === book.id && t.status === 'borrowed' && !t.returnDate
+  );
+  
+  const dueDate = bookTransaction ? new Date(bookTransaction.dueDate).toLocaleDateString() : null;
+  
   const handleBorrow = () => {
     if (currentUser) {
       borrowResource(currentUser.id, book.id);
     }
   };
+
+  const handleReserve = () => {
+    if (currentUser) {
+      reserveResource(currentUser.id, book.id);
+    }
+  };
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+        <p className="mb-8">Please log in to view book details and borrow resources.</p>
+        <Button onClick={() => navigate('/login')}>Go to Login</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,18 +71,29 @@ const BookDetailsPage = () => {
             />
           </div>
           
-          {isAuthenticated && book.available && (
+          {book.available ? (
             <Button 
               className="w-full mt-4 bg-library-accent hover:bg-library-accent-dark"
               onClick={handleBorrow}
             >
               Borrow this Resource
             </Button>
-          )}
-          
-          {!book.available && (
-            <div className="mt-4 text-center p-2 bg-amber-50 border border-amber-200 rounded">
-              <p className="text-amber-700">This resource is currently unavailable</p>
+          ) : (
+            <div className="mt-4">
+              <Button 
+                className="w-full border-amber-300 text-amber-700 hover:bg-amber-50" 
+                variant="outline"
+                onClick={handleReserve}
+              >
+                Reserve this Resource
+              </Button>
+              <div className="text-center p-2 mt-2 bg-amber-50 border border-amber-200 rounded">
+                <p className="text-amber-700">
+                  {dueDate 
+                    ? `This resource is not available until ${dueDate}`
+                    : "This resource is currently unavailable"}
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -67,8 +102,11 @@ const BookDetailsPage = () => {
         <div className="md:col-span-2">
           <div className="flex items-start justify-between">
             <h1 className="text-3xl font-bold text-library-800">{book.title}</h1>
-            <Badge variant={book.available ? "default" : "outline"} className="ml-2">
-              {book.available ? "Available" : "Borrowed"}
+            <Badge 
+              variant={book.available ? "default" : "outline"} 
+              className={`ml-2 ${book.available ? "" : "bg-amber-50 text-amber-700 border-amber-200"}`}
+            >
+              {book.available ? "Available" : dueDate ? `Not Available until ${dueDate}` : "Not Available"}
             </Badge>
           </div>
           

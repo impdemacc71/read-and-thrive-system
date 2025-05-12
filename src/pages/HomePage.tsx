@@ -1,8 +1,8 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useLibrary } from '@/contexts/LibraryContext';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,16 @@ import { Resource } from '@/data/mockData';
 
 const HomePage = () => {
   const { isAuthenticated, currentUser } = useAuth();
-  const { resources, borrowResource, searchResources, getResourcesByCategory } = useLibrary();
+  const { resources, borrowResource, searchResources, getResourcesByCategory, reserveResource } = useLibrary();
   const [filteredResources, setFilteredResources] = useState<Resource[]>(resources.slice(0, 4));
+  const navigate = useNavigate();
+  
+  // If not authenticated, redirect to login
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
   
   // Extract unique categories
   const categories = Array.from(new Set(resources.map(resource => resource.category)));
@@ -32,6 +40,16 @@ const HomePage = () => {
     }
   };
 
+  const handleReserve = (resourceId: string) => {
+    if (currentUser) {
+      reserveResource(currentUser.id, resourceId);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero section */}
@@ -40,14 +58,6 @@ const HomePage = () => {
         <p className="text-lg text-library-600 mb-8">
           Access thousands of books, journals, and resources to support your academic journey
         </p>
-        
-        {!isAuthenticated && (
-          <Link to="/login">
-            <Button className="bg-library-accent hover:bg-library-accent-dark">
-              Log in to get started
-            </Button>
-          </Link>
-        )}
       </section>
 
       {/* Search section */}
@@ -75,8 +85,11 @@ const HomePage = () => {
               <BookCard 
                 key={resource.id} 
                 book={resource} 
-                onBorrow={() => handleBorrow(resource.id)}
-                showBorrowButton={isAuthenticated}
+                onBorrow={resource.available ? 
+                  () => handleBorrow(resource.id) : 
+                  () => handleReserve(resource.id)
+                }
+                showBorrowButton={true}
               />
             ))}
           </div>

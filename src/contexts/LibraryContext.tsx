@@ -15,6 +15,8 @@ interface LibraryContextType {
   getResourcesByCategory: (category: string) => Resource[];
   getResourcesByType: (type: string) => Resource[];
   scanIdentifier: (identifier: string) => Resource | undefined;
+  reserveResource: (userId: string, resourceId: string) => void;
+  calculateFine: (transaction: Transaction) => number;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -87,8 +89,11 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
-    // Update transaction status
+    // Calculate fine if overdue
+    const fine = calculateFine(transaction);
     const returnDate = new Date().toISOString().split('T')[0];
+
+    // Update transaction status
     setTransactions(prevTransactions =>
       prevTransactions.map(t =>
         t.id === transactionId
@@ -106,9 +111,77 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const resource = resources.find(r => r.id === transaction.resourceId);
     
+    if (fine > 0) {
+      toast({
+        title: "Resource Returned with Fine",
+        description: `You have returned "${resource?.title}". A fine of $${fine.toFixed(2)} has been applied for late return.`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Resource Returned",
+        description: `You have successfully returned "${resource?.title}".`,
+      });
+    }
+  };
+
+  const calculateFine = (transaction: Transaction): number => {
+    if (transaction.status !== 'borrowed' || transaction.returnDate) return 0;
+    
+    const dueDate = new Date(transaction.dueDate);
+    const today = new Date();
+    
+    if (today <= dueDate) return 0;
+    
+    const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 3600 * 24));
+    return daysOverdue * 1; // $1 per day
+  };
+
+  const reserveResource = (userId: string, resourceId: string) => {
+    // Check if resource exists
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource) {
+      toast({
+        title: "Error",
+        description: "This resource does not exist.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if there's an active transaction for this resource
+    const activeTransaction = transactions.find(
+      t => t.resourceId === resourceId && t.status === 'borrowed' && !t.returnDate
+    );
+
+    if (!activeTransaction) {
+      toast({
+        title: "Error",
+        description: "This resource is not currently borrowed. You can borrow it directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a reservation transaction
+    const reservationDate = new Date().toISOString().split('T')[0];
+    
+    const newTransaction: Transaction = {
+      id: `${transactions.length + 1}`,
+      userId,
+      resourceId,
+      checkoutDate: activeTransaction.dueDate, // Will be available after due date
+      dueDate: '', // Will be set when actually borrowed
+      returnDate: null,
+      status: 'reserved',
+    };
+
+    // Add transaction
+    setTransactions(prev => [...prev, newTransaction]);
+
     toast({
-      title: "Resource Returned",
-      description: `You have successfully returned "${resource?.title}".`,
+      title: "Resource Reserved",
+      description: `You have successfully reserved "${resource.title}". You will be notified when it becomes available.`,
     });
   };
 
@@ -186,10 +259,11 @@ export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children })
         getResourcesByCategory,
         getResourcesByType,
         scanIdentifier,
+        reserveResource,
+        calculateFine,
       }}
     >
       {children}
     </LibraryContext.Provider>
   );
 };
-
