@@ -9,13 +9,13 @@ import { Transaction } from '@/data/mockData';
 
 const MyBooksPage = () => {
   const { currentUser } = useAuth();
-  const { transactions, books, returnBook } = useLibrary();
+  const { transactions, resources, returnResource } = useLibrary();
   
   if (!currentUser) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Not Authorized</h1>
-        <p className="mb-8">You need to log in to view your books.</p>
+        <p className="mb-8">You need to log in to view your resources.</p>
         <Link to="/login">
           <Button>Go to Login</Button>
         </Link>
@@ -45,12 +45,12 @@ const MyBooksPage = () => {
   const totalFines = overdue.reduce((sum, transaction) => sum + calculateFine(transaction), 0);
   
   const handleReturn = (transactionId: string) => {
-    returnBook(transactionId);
+    returnResource(transactionId);
   };
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-library-800">My Books</h1>
+      <h1 className="text-3xl font-bold mb-6 text-library-800">My Resources</h1>
       
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -59,23 +59,23 @@ const MyBooksPage = () => {
         <SummaryCard title="Total Fines" value={`$${totalFines.toFixed(2)}`} variant={totalFines > 0 ? "error" : "default"} />
       </div>
       
-      {/* Books sections */}
+      {/* Resources sections */}
       <div className="space-y-10">
-        {/* Borrowed books */}
-        <BooksSection
+        {/* Borrowed resources */}
+        <ResourcesSection
           title="Currently Borrowed"
           transactions={borrowed}
-          books={books}
+          resources={resources}
           onReturn={handleReturn}
-          emptyMessage="You don't have any books borrowed currently."
+          emptyMessage="You don't have any resources borrowed currently."
         />
         
-        {/* Overdue books */}
+        {/* Overdue resources */}
         {overdue.length > 0 && (
-          <BooksSection
-            title="Overdue Books"
+          <ResourcesSection
+            title="Overdue Resources"
             transactions={overdue}
-            books={books}
+            resources={resources}
             onReturn={handleReturn}
             variant="warning"
             showFines
@@ -85,10 +85,10 @@ const MyBooksPage = () => {
         
         {/* Return history */}
         {returned.length > 0 && (
-          <BooksSection
+          <ResourcesSection
             title="Previously Borrowed"
             transactions={returned}
-            books={books}
+            resources={resources}
             showReturnDate
           />
         )}
@@ -130,20 +130,20 @@ const SummaryCard = ({
   );
 };
 
-const BooksSection = ({ 
+const ResourcesSection = ({ 
   title, 
   transactions, 
-  books, 
+  resources, 
   onReturn, 
   variant = 'default',
-  emptyMessage = "No books to display.",
+  emptyMessage = "No resources to display.",
   showReturnDate = false,
   showFines = false,
   calculateFine,
 }: { 
   title: string;
   transactions: Transaction[];
-  books: any[];
+  resources: any[];
   onReturn?: (id: string) => void;
   variant?: 'default' | 'warning' | 'error';
   emptyMessage?: string;
@@ -173,7 +173,7 @@ const BooksSection = ({
           <table className="w-full border-collapse">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Checkout Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                 {showReturnDate && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Date</th>}
@@ -183,8 +183,8 @@ const BooksSection = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {transactions.map((transaction) => {
-                const book = books.find(b => b.id === transaction.bookId);
-                if (!book) return null;
+                const resource = resources.find(r => r.id === transaction.resourceId);
+                if (!resource) return null;
                 
                 const fine = showFines && calculateFine ? calculateFine(transaction) : 0;
                 
@@ -193,11 +193,11 @@ const BooksSection = ({
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 object-cover" src={book.cover} alt={book.title} />
+                          <img className="h-10 w-10 object-cover" src={resource.cover} alt={resource.title} />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-library-800">{book.title}</div>
-                          <div className="text-sm text-gray-500">{book.author}</div>
+                          <div className="text-sm font-medium text-library-800">{resource.title}</div>
+                          <div className="text-sm text-gray-500">{resource.author}</div>
                         </div>
                       </div>
                     </td>

@@ -1,12 +1,12 @@
 
-import { Book } from '@/data/mockData';
+import { Resource } from '@/data/mockData';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 
 interface BookCardProps {
-  book: Book;
+  book: Resource;
   onBorrow?: () => void;
   showBorrowButton?: boolean;
 }

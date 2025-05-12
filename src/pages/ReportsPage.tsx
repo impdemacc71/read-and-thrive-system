@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Book, Transaction } from '@/data/mockData';
+import { Resource, Transaction } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const ReportsPage = () => {
   const { currentUser } = useAuth();
-  const { books, transactions } = useLibrary();
+  const { resources, transactions } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [timeframe, setTimeframe] = useState('month');
@@ -31,14 +31,14 @@ const ReportsPage = () => {
 
   // Generate borrowing data for chart
   const generateBorrowingData = () => {
-    // Group books by category
-    const categoryCounts = books.reduce((acc, book) => {
-      const category = book.category;
+    // Group resources by category
+    const categoryCounts = resources.reduce((acc, resource) => {
+      const category = resource.category;
       if (!acc[category]) acc[category] = 0;
       
-      // Count transactions for this book
-      const bookTransactions = transactions.filter(t => t.bookId === book.id);
-      acc[category] += bookTransactions.length;
+      // Count transactions for this resource
+      const resourceTransactions = transactions.filter(t => t.resourceId === resource.id);
+      acc[category] += resourceTransactions.length;
       
       return acc;
     }, {} as Record<string, number>);
@@ -51,24 +51,24 @@ const ReportsPage = () => {
   
   // Generate availability data for chart
   const availabilityData = [
-    { name: 'Available', value: books.filter(book => book.available).length },
-    { name: 'Borrowed', value: books.filter(book => !book.available).length },
+    { name: 'Available', value: resources.filter(resource => resource.available).length },
+    { name: 'Borrowed', value: resources.filter(resource => !resource.available).length },
   ];
 
-  // Top borrowed books
-  const getTopBorrowedBooks = (): { book: Book, count: number }[] => {
-    const bookCounts = transactions.reduce((acc, transaction) => {
-      const { bookId } = transaction;
-      acc[bookId] = (acc[bookId] || 0) + 1;
+  // Top borrowed resources
+  const getTopBorrowedResources = (): { resource: Resource, count: number }[] => {
+    const resourceCounts = transactions.reduce((acc, transaction) => {
+      const { resourceId } = transaction;
+      acc[resourceId] = (acc[resourceId] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
-    return Object.entries(bookCounts)
-      .map(([bookId, count]) => ({
-        book: books.find(b => b.id === bookId)!,
+    return Object.entries(resourceCounts)
+      .map(([resourceId, count]) => ({
+        resource: resources.find(r => r.id === resourceId)!,
         count
       }))
-      .filter(item => item.book) // Make sure the book exists
+      .filter(item => item.resource) // Make sure the resource exists
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   };
@@ -115,12 +115,12 @@ const ReportsPage = () => {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 rounded-md">
-                <p className="text-sm text-blue-600">Total Books</p>
-                <p className="text-2xl font-bold">{books.length}</p>
+                <p className="text-sm text-blue-600">Total Resources</p>
+                <p className="text-2xl font-bold">{resources.length}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-md">
-                <p className="text-sm text-green-600">Available Books</p>
-                <p className="text-2xl font-bold">{books.filter(b => b.available).length}</p>
+                <p className="text-sm text-green-600">Available Resources</p>
+                <p className="text-2xl font-bold">{resources.filter(r => r.available).length}</p>
               </div>
               <div className="p-4 bg-amber-50 rounded-md">
                 <p className="text-sm text-amber-600">Total Loans</p>
@@ -136,7 +136,7 @@ const ReportsPage = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Book Availability</CardTitle>
+            <CardTitle>Resource Availability</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -172,7 +172,7 @@ const ReportsPage = () => {
         <TabsContent value="borrowing">
           <Card>
             <CardHeader>
-              <CardTitle>Books Borrowed by Category</CardTitle>
+              <CardTitle>Resources Borrowed by Category</CardTitle>
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -196,7 +196,7 @@ const ReportsPage = () => {
             </CardFooter>
           </Card>
           
-          <h2 className="text-xl font-semibold mt-8 mb-4">Top Borrowed Books</h2>
+          <h2 className="text-xl font-semibold mt-8 mb-4">Top Borrowed Resources</h2>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="bg-gray-50">
@@ -208,24 +208,24 @@ const ReportsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {getTopBorrowedBooks().map((item, index) => (
-                  <tr key={item.book.id} className="hover:bg-gray-50">
+                {getTopBorrowedResources().map((item, index) => (
+                  <tr key={item.resource.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-semibold">{index + 1}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 object-cover" src={item.book.cover} alt={item.book.title} />
+                          <img className="h-10 w-10 object-cover" src={item.resource.cover} alt={item.resource.title} />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-library-800">{item.book.title}</div>
-                          <div className="text-sm text-gray-500">{item.book.author}</div>
+                          <div className="text-sm font-medium text-library-800">{item.resource.title}</div>
+                          <div className="text-sm text-gray-500">{item.resource.author}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{item.book.category}</div>
+                      <div className="text-sm text-gray-900">{item.resource.category}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-semibold text-library-700">{item.count}</div>
@@ -240,7 +240,7 @@ const ReportsPage = () => {
         <TabsContent value="categories">
           <Card>
             <CardHeader>
-              <CardTitle>Books by Category</CardTitle>
+              <CardTitle>Resources by Category</CardTitle>
             </CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">

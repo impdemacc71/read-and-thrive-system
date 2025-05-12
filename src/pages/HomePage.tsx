@@ -6,29 +6,29 @@ import { Link } from 'react-router-dom';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
 import { Button } from '@/components/ui/button';
-import { Book } from '@/data/mockData';
+import { Resource } from '@/data/mockData';
 
 const HomePage = () => {
   const { isAuthenticated, currentUser } = useAuth();
-  const { books, borrowBook, searchBooks, getBooksByCategory } = useLibrary();
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>(books.slice(0, 4));
+  const { resources, borrowResource, searchResources, getResourcesByCategory } = useLibrary();
+  const [filteredResources, setFilteredResources] = useState<Resource[]>(resources.slice(0, 4));
   
   // Extract unique categories
-  const categories = Array.from(new Set(books.map(book => book.category)));
+  const categories = Array.from(new Set(resources.map(resource => resource.category)));
 
   const handleSearch = (query: string, category: string) => {
-    let results = searchBooks(query);
+    let results = searchResources(query);
     
     if (category !== 'All') {
-      results = results.filter(book => book.category === category);
+      results = getResourcesByCategory(category);
     }
     
-    setFilteredBooks(results);
+    setFilteredResources(results);
   };
 
-  const handleBorrow = (bookId: string) => {
+  const handleBorrow = (resourceId: string) => {
     if (currentUser) {
-      borrowBook(currentUser.id, bookId);
+      borrowResource(currentUser.id, resourceId);
     }
   };
 
@@ -53,37 +53,37 @@ const HomePage = () => {
       {/* Search section */}
       <section className="mb-12">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-4 text-library-700">Find Books</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-library-700">Find Resources</h2>
           <SearchBar onSearch={handleSearch} categories={categories} />
         </div>
       </section>
 
-      {/* Featured books */}
+      {/* Featured resources */}
       <section>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-library-700">
-            {filteredBooks.length < books.length ? 'Search Results' : 'Featured Books'}
+            {filteredResources.length < resources.length ? 'Search Results' : 'Featured Resources'}
           </h2>
           <Link to="/catalog">
-            <Button variant="outline">View All Books</Button>
+            <Button variant="outline">View All Resources</Button>
           </Link>
         </div>
 
-        {filteredBooks.length > 0 ? (
+        {filteredResources.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredBooks.slice(0, 8).map((book) => (
+            {filteredResources.slice(0, 8).map((resource) => (
               <BookCard 
-                key={book.id} 
-                book={book} 
-                onBorrow={() => handleBorrow(book.id)}
+                key={resource.id} 
+                book={resource} 
+                onBorrow={() => handleBorrow(resource.id)}
                 showBorrowButton={isAuthenticated}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-10">
-            <p className="text-lg text-library-500">No books found matching your search criteria.</p>
-            <Button className="mt-4" variant="outline" onClick={() => setFilteredBooks(books.slice(0, 4))}>
+            <p className="text-lg text-library-500">No resources found matching your search criteria.</p>
+            <Button className="mt-4" variant="outline" onClick={() => setFilteredResources(resources.slice(0, 4))}>
               Reset Search
             </Button>
           </div>
