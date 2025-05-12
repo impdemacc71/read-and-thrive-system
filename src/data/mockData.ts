@@ -1,4 +1,3 @@
-
 // Mock data for the Library Management System
 
 export type ResourceType = 'book' | 'journal' | 'ebook' | 'article' | 'audio' | 'video';
@@ -44,7 +43,7 @@ export interface Transaction {
   checkoutDate: string;
   dueDate: string;
   returnDate: string | null;
-  status: 'borrowed' | 'returned' | 'overdue';
+  status: 'borrowed' | 'returned' | 'overdue' | 'reserved';
 }
 
 export const users: User[] = [
@@ -317,4 +316,3 @@ export const transactions: Transaction[] = [
     status: 'returned',
   },
 ];
-
