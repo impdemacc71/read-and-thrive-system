@@ -7,16 +7,33 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
-import { Resource, Transaction } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
+import { Resource, Transaction, User } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import AdminUserManagement from '@/components/AdminUserManagement';
+import UserFinesManagement from '@/components/UserFinesManagement';
+
+// Dummy function to add a user (would connect to authentication system in a real app)
+const addUser = (newUser: Omit<User, 'id'>) => {
+  // This would connect to a real authentication system in a production app
+  console.log('Creating new user:', newUser);
+  // Implementation would go here
+};
 
 const ReportsPage = () => {
   const { currentUser } = useAuth();
-  const { resources, transactions } = useLibrary();
+  const { resources, transactions, calculateFine } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [timeframe, setTimeframe] = useState('month');
+  
+  // Mock users for demo purposes
+  const users: User[] = [
+    { id: '1', name: 'Admin User', email: 'admin@university.edu', role: 'admin' },
+    { id: '2', name: 'Librarian User', email: 'librarian@university.edu', role: 'librarian' },
+    { id: '3', name: 'Student One', email: 'student1@university.edu', role: 'student' },
+    { id: '4', name: 'Student Two', email: 'student2@university.edu', role: 'student' }
+  ];
   
   // Check if user has librarian or admin role
   if (!currentUser || (currentUser.role !== 'librarian' && currentUser.role !== 'admin')) {
@@ -87,89 +104,93 @@ const ReportsPage = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-library-800">Library Reports</h1>
       
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Analytics Dashboard</h2>
-        <div className="flex items-center gap-2">
-          <Select
-            value={timeframe}
-            onValueChange={setTimeframe}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Time Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Last Week</SelectItem>
-              <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="year">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        {/* Summary Cards */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Library Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50 rounded-md">
-                <p className="text-sm text-blue-600">Total Resources</p>
-                <p className="text-2xl font-bold">{resources.length}</p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-md">
-                <p className="text-sm text-green-600">Available Resources</p>
-                <p className="text-2xl font-bold">{resources.filter(r => r.available).length}</p>
-              </div>
-              <div className="p-4 bg-amber-50 rounded-md">
-                <p className="text-sm text-amber-600">Total Loans</p>
-                <p className="text-2xl font-bold">{transactions.length}</p>
-              </div>
-              <div className="p-4 bg-red-50 rounded-md">
-                <p className="text-sm text-red-600">Overdue</p>
-                <p className="text-2xl font-bold">{transactions.filter(t => t.status === 'overdue').length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Resource Availability</CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={availabilityData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {availabilityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#10B981' : '#F59E0B'} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="borrowing">
+      <Tabs defaultValue="dashboard">
         <TabsList className="mb-6">
-          <TabsTrigger value="borrowing">Borrowing Trends</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="categories">Category Analysis</TabsTrigger>
+          <TabsTrigger value="fines">User Fines</TabsTrigger>
+          {currentUser.role === 'admin' && (
+            <TabsTrigger value="users">User Management</TabsTrigger>
+          )}
         </TabsList>
         
-        <TabsContent value="borrowing">
+        <TabsContent value="dashboard">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Analytics Dashboard</h2>
+            <div className="flex items-center gap-2">
+              <Select
+                value={timeframe}
+                onValueChange={setTimeframe}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Time Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                  <SelectItem value="year">Last Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Summary Cards */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Library Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-600">Total Resources</p>
+                    <p className="text-2xl font-bold">{resources.length}</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-md">
+                    <p className="text-sm text-green-600">Available Resources</p>
+                    <p className="text-2xl font-bold">{resources.filter(r => r.available).length}</p>
+                  </div>
+                  <div className="p-4 bg-amber-50 rounded-md">
+                    <p className="text-sm text-amber-600">Total Loans</p>
+                    <p className="text-2xl font-bold">{transactions.length}</p>
+                  </div>
+                  <div className="p-4 bg-red-50 rounded-md">
+                    <p className="text-sm text-red-600">Overdue</p>
+                    <p className="text-2xl font-bold">{transactions.filter(t => t.status === 'overdue').length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Resource Availability</CardTitle>
+              </CardHeader>
+              <CardContent className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={availabilityData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {availabilityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 0 ? '#10B981' : '#F59E0B'} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle>Resources Borrowed by Category</CardTitle>
@@ -271,6 +292,23 @@ const ReportsPage = () => {
             </CardFooter>
           </Card>
         </TabsContent>
+        
+        <TabsContent value="fines">
+          <UserFinesManagement 
+            users={users}
+            transactions={transactions}
+            calculateFine={calculateFine}
+          />
+        </TabsContent>
+        
+        {currentUser.role === 'admin' && (
+          <TabsContent value="users">
+            <AdminUserManagement 
+              users={users}
+              addUser={addUser}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

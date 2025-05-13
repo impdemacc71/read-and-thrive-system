@@ -5,12 +5,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const BookDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getResourceById, borrowResource, transactions, reserveResource } = useLibrary();
   const { currentUser, isAuthenticated } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   
   const book = id ? getResourceById(id) : undefined;
   
@@ -33,7 +40,8 @@ const BookDetailsPage = () => {
   
   const handleBorrow = () => {
     if (currentUser) {
-      borrowResource(currentUser.id, book.id);
+      const dueDate = selectedDate ? selectedDate.toISOString().split('T')[0] : undefined;
+      borrowResource(currentUser.id, book.id, dueDate);
     }
   };
 
@@ -42,6 +50,11 @@ const BookDetailsPage = () => {
       reserveResource(currentUser.id, book.id);
     }
   };
+
+  // For date picker - limit to max 10 days from today
+  const today = new Date();
+  const maxDate = new Date();
+  maxDate.setDate(today.getDate() + 10);
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -72,12 +85,48 @@ const BookDetailsPage = () => {
           </div>
           
           {book.available ? (
-            <Button 
-              className="w-full mt-4 bg-library-accent hover:bg-library-accent-dark"
-              onClick={handleBorrow}
-            >
-              Borrow this Resource
-            </Button>
+            <div className="mt-4">
+              <div className="mb-4">
+                <p className="text-sm text-gray-700 mb-2">Select due date (max 10 days):</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a return date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => 
+                        date < today || 
+                        date > maxDate
+                      }
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button 
+                className="w-full mt-2 bg-library-accent hover:bg-library-accent-dark"
+                onClick={handleBorrow}
+                disabled={!selectedDate}
+              >
+                Borrow this Resource
+              </Button>
+              {!selectedDate && (
+                <p className="text-xs text-center mt-2 text-amber-600">Please select a return date</p>
+              )}
+            </div>
           ) : (
             <div className="mt-4">
               <Button 
@@ -94,6 +143,18 @@ const BookDetailsPage = () => {
                     : "This resource is currently unavailable"}
                 </p>
               </div>
+            </div>
+          )}
+          
+          {/* Quantity for physical resources */}
+          {book.type === 'physical' && (
+            <div className="mt-4 p-3 bg-gray-50 rounded border">
+              <p className="font-medium">Availability</p>
+              <p className="text-sm">
+                {book.quantity > 0 
+                  ? `${book.quantity} copies available` 
+                  : "Currently out of stock"}
+              </p>
             </div>
           )}
         </div>

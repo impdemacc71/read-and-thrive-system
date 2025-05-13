@@ -22,7 +22,7 @@ const LoginPage = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/');
+        navigate('/catalog'); // Redirect to catalog instead of home
       }
     } finally {
       setIsLoading(false);

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Resource, Transaction } from '@/data/mockData';
@@ -11,13 +10,23 @@ export function useTransactionManagement(
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const { toast } = useToast();
 
-  const borrowResource = (userId: string, resourceId: string) => {
+  const borrowResource = (userId: string, resourceId: string, selectedDueDate?: string) => {
     // Check if resource is available
     const resource = resources.find(r => r.id === resourceId);
-    if (!resource || !resource.available) {
+    if (!resource) {
       toast({
         title: "Error",
-        description: "This resource is not available for checkout.",
+        description: "Resource not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // For physical resources, check quantity
+    if (resource.type === 'physical' && resource.quantity <= 0) {
+      toast({
+        title: "Error",
+        description: "This physical resource is out of stock.",
         variant: "destructive",
       });
       return;
@@ -25,8 +34,12 @@ export function useTransactionManagement(
 
     // Create a new transaction
     const checkoutDate = new Date().toISOString().split('T')[0];
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 14); // 2 weeks from now
+    
+    // Set due date (default to 10 days if not provided)
+    const dueDate = selectedDueDate ? new Date(selectedDueDate) : new Date();
+    if (!selectedDueDate) {
+      dueDate.setDate(dueDate.getDate() + 10); // Default to 10 days
+    }
     
     const newTransaction: Transaction = {
       id: `${transactions.length + 1}`,
@@ -38,11 +51,25 @@ export function useTransactionManagement(
       status: 'borrowed',
     };
 
-    // Update resource availability
+    // Update resource availability for physical resources
     setResources(prevResources =>
-      prevResources.map(r =>
-        r.id === resourceId ? { ...r, available: false } : r
-      )
+      prevResources.map(r => {
+        if (r.id === resourceId) {
+          // For physical resources, decrement quantity
+          if (r.type === 'physical') {
+            const newQuantity = (r.quantity || 1) - 1;
+            const available = newQuantity > 0;
+            return { ...r, quantity: newQuantity, available };
+          }
+          // For e-resources, keep available as true
+          if (r.type === 'electronic') {
+            return r;
+          }
+          // Default behavior for other types
+          return { ...r, available: false };
+        }
+        return r;
+      })
     );
 
     // Add transaction
@@ -79,14 +106,32 @@ export function useTransactionManagement(
       )
     );
 
+    // Get the resource
+    const resource = resources.find(r => r.id === transaction.resourceId);
+    if (!resource) {
+      toast({
+        title: "Error",
+        description: "Resource not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Make the resource available again
     setResources(prevResources =>
-      prevResources.map(r =>
-        r.id === transaction.resourceId ? { ...r, available: true } : r
-      )
+      prevResources.map(r => {
+        if (r.id === transaction.resourceId) {
+          // For physical resources, increment quantity
+          if (r.type === 'physical') {
+            const newQuantity = (r.quantity || 0) + 1;
+            return { ...r, quantity: newQuantity, available: true };
+          }
+          // For other resources, just make available
+          return { ...r, available: true };
+        }
+        return r;
+      })
     );
-
-    const resource = resources.find(r => r.id === transaction.resourceId);
     
     if (fine > 0) {
       toast({

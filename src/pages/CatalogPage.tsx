@@ -56,13 +56,13 @@ const CatalogPage = () => {
 
   const handleBorrow = (resourceId: string) => {
     if (currentUser) {
-      borrowResource(currentUser.id, resourceId);
+      navigate(`/book/${resourceId}`);
     }
   };
 
   const handleReserve = (resourceId: string) => {
     if (currentUser) {
-      reserveResource(currentUser.id, resourceId);
+      navigate(`/book/${resourceId}`);
     }
   };
 
@@ -72,9 +72,9 @@ const CatalogPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-library-800">Library Catalog</h1>
+      <h1 className="text-3xl font-bold mb-4 text-library-800 md:mb-8">Library Catalog</h1>
       
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <SearchBar 
           onSearch={handleSearch} 
           categories={categories} 
@@ -83,13 +83,13 @@ const CatalogPage = () => {
       </div>
       
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {[...Array(8)].map((_, index) => (
-            <div key={index} className="bg-gray-100 rounded-md h-80 animate-pulse"></div>
+            <div key={index} className="bg-gray-100 rounded-md h-64 sm:h-72 md:h-80 animate-pulse"></div>
           ))}
         </div>
       ) : filteredResources.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {filteredResources.map((resource) => (
             <BookCard
               key={resource.id}
