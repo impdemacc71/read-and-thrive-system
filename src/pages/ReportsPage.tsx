@@ -27,12 +27,12 @@ const ReportsPage = () => {
   const { toast } = useToast();
   const [timeframe, setTimeframe] = useState('month');
   
-  // Mock users for demo purposes
+  // Mock users for demo purposes with added fines property
   const users: User[] = [
-    { id: '1', name: 'Admin User', email: 'admin@university.edu', role: 'admin' },
-    { id: '2', name: 'Librarian User', email: 'librarian@university.edu', role: 'librarian' },
-    { id: '3', name: 'Student One', email: 'student1@university.edu', role: 'student' },
-    { id: '4', name: 'Student Two', email: 'student2@university.edu', role: 'student' }
+    { id: '1', name: 'Admin User', email: 'admin@university.edu', role: 'admin', fines: 0 },
+    { id: '2', name: 'Librarian User', email: 'librarian@university.edu', role: 'librarian', fines: 0 },
+    { id: '3', name: 'Student One', email: 'student1@university.edu', role: 'student', fines: 5 },
+    { id: '4', name: 'Student Two', email: 'student2@university.edu', role: 'student', fines: 10 }
   ];
   
   // Check if user has librarian or admin role

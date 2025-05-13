@@ -53,6 +53,7 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUse
       email,
       name,
       role: role as 'admin' | 'librarian' | 'student',
+      fines: 0, // Initialize with zero fines
     };
 
     addUser(newUser);

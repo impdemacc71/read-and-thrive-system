@@ -23,7 +23,7 @@ export function useTransactionManagement(
     }
     
     // For physical resources, check quantity
-    if (resource.type === 'physical' && resource.quantity <= 0) {
+    if (resource.type === 'physical' && resource.quantity !== undefined && resource.quantity <= 0) {
       toast({
         title: "Error",
         description: "This physical resource is out of stock.",
@@ -57,7 +57,7 @@ export function useTransactionManagement(
         if (r.id === resourceId) {
           // For physical resources, decrement quantity
           if (r.type === 'physical') {
-            const newQuantity = (r.quantity || 1) - 1;
+            const newQuantity = ((r.quantity !== undefined ? r.quantity : 1) - 1);
             const available = newQuantity > 0;
             return { ...r, quantity: newQuantity, available };
           }
@@ -123,7 +123,7 @@ export function useTransactionManagement(
         if (r.id === transaction.resourceId) {
           // For physical resources, increment quantity
           if (r.type === 'physical') {
-            const newQuantity = (r.quantity || 0) + 1;
+            const newQuantity = ((r.quantity !== undefined ? r.quantity : 0) + 1);
             return { ...r, quantity: newQuantity, available: true };
           }
           // For other resources, just make available

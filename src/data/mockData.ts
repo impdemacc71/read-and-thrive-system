@@ -1,6 +1,6 @@
 // Mock data for the Library Management System
 
-export type ResourceType = 'book' | 'journal' | 'ebook' | 'article' | 'audio' | 'video';
+export type ResourceType = 'book' | 'journal' | 'ebook' | 'article' | 'audio' | 'video' | 'physical' | 'electronic';
 
 export interface User {
   id: string;
@@ -34,6 +34,7 @@ export interface Resource {
   pages?: number;
   keywords: string[];
   dateAdded: string;
+  quantity?: number;
 }
 
 export interface Transaction {

@@ -4,7 +4,7 @@ import { Resource, Transaction } from '@/data/mockData';
 export interface LibraryContextType {
   resources: Resource[];
   transactions: Transaction[];
-  borrowResource: (userId: string, resourceId: string) => void;
+  borrowResource: (userId: string, resourceId: string, dueDate?: string) => void;
   returnResource: (transactionId: string) => void;
   addResource: (resource: Omit<Resource, 'id'>) => void;
   searchResources: (query: string) => Resource[];

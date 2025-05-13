@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,9 +38,9 @@ const BookDetailsPage = () => {
   const dueDate = bookTransaction ? new Date(bookTransaction.dueDate).toLocaleDateString() : null;
   
   const handleBorrow = () => {
-    if (currentUser) {
-      const dueDate = selectedDate ? selectedDate.toISOString().split('T')[0] : undefined;
-      borrowResource(currentUser.id, book.id, dueDate);
+    if (currentUser && selectedDate) {
+      const dueDateString = selectedDate.toISOString().split('T')[0];
+      borrowResource(currentUser.id, book.id, dueDateString);
     }
   };
 
@@ -151,7 +150,7 @@ const BookDetailsPage = () => {
             <div className="mt-4 p-3 bg-gray-50 rounded border">
               <p className="font-medium">Availability</p>
               <p className="text-sm">
-                {book.quantity > 0 
+                {book.quantity !== undefined && book.quantity > 0 
                   ? `${book.quantity} copies available` 
                   : "Currently out of stock"}
               </p>
