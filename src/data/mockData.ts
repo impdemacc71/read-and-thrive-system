@@ -99,6 +99,7 @@ export const resources: Resource[] = [
     pages: 450,
     keywords: ['physics', 'mechanics', 'thermodynamics'],
     dateAdded: '2024-10-15',
+    quantity: 5, // Added quantity
   },
   {
     id: '2',
@@ -120,6 +121,7 @@ export const resources: Resource[] = [
     pages: 380,
     keywords: ['mathematics', 'calculus', 'algebra'],
     dateAdded: '2024-09-10',
+    quantity: 0, // No copies available
   },
   {
     id: '3',
@@ -141,6 +143,7 @@ export const resources: Resource[] = [
     pages: 320,
     keywords: ['literature', 'modern', 'analysis'],
     dateAdded: '2024-05-20',
+    quantity: 3, // Added quantity
   },
   {
     id: '4',
@@ -163,6 +166,7 @@ export const resources: Resource[] = [
     pages: 520,
     keywords: ['computer science', 'programming', 'algorithms'],
     dateAdded: '2025-01-05',
+    // No quantity for e-resources
   },
   {
     id: '5',
@@ -184,6 +188,7 @@ export const resources: Resource[] = [
     pages: 500,
     keywords: ['art', 'history', 'movements'],
     dateAdded: '2024-08-12',
+    quantity: 8, // Added quantity
   },
   {
     id: '6',
@@ -205,6 +210,7 @@ export const resources: Resource[] = [
     pages: 420,
     keywords: ['biology', 'cells', 'genetics'],
     dateAdded: '2024-11-20',
+    quantity: 0, // No copies available
   },
   {
     id: '7',

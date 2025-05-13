@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Resource, ResourceType } from '@/data/mockData';
@@ -49,6 +48,7 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ initialData, onSave }) 
       dateAdded: initialData?.dateAdded || new Date().toISOString().split('T')[0],
       keywords: initialData?.keywords || [],
       cover: initialData?.cover || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400',
+      quantity: initialData?.quantity || 1, // Default to 1 copy
     },
   });
 
@@ -74,6 +74,17 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ initialData, onSave }) 
       keywords: keywords,
       digital: isDigital,
     };
+    
+    // For physical resources, ensure quantity is set
+    if (!isDigital && (resourceType === 'book' || resourceType === 'journal')) {
+      completeData.quantity = completeData.quantity || 1;
+      // Set available status based on quantity
+      completeData.available = (completeData.quantity > 0);
+    } else if (isDigital) {
+      // Digital resources don't have quantity, always available
+      delete completeData.quantity;
+      completeData.available = true;
+    }
     
     onSave(completeData);
     
@@ -124,6 +135,18 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ initialData, onSave }) 
                 placeholder="e.g., 450"
               />
             </div>
+            {!isDigital && (
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Quantity</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  {...register('quantity', { valueAsNumber: true, min: 0 })}
+                  placeholder="e.g., 5"
+                />
+                {errors.quantity && <p className="text-red-500 text-sm">Quantity must be 0 or greater</p>}
+              </div>
+            )}
           </div>
         );
       case 'journal':

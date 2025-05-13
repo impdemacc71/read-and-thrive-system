@@ -1,5 +1,6 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +66,9 @@ const BookDetailsPage = () => {
       </div>
     );
   }
+  
+  // Check if a resource is available for borrowing
+  const isAvailable = book.digital || (book.quantity !== undefined ? book.quantity > 0 : book.available);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -83,7 +87,7 @@ const BookDetailsPage = () => {
             />
           </div>
           
-          {book.available ? (
+          {isAvailable ? (
             <div className="mt-4">
               <div className="mb-4">
                 <p className="text-sm text-gray-700 mb-2">Select due date (max 10 days):</p>
@@ -146,7 +150,7 @@ const BookDetailsPage = () => {
           )}
           
           {/* Quantity for physical resources */}
-          {book.type === 'physical' && (
+          {!book.digital && book.type !== 'electronic' && (
             <div className="mt-4 p-3 bg-gray-50 rounded border">
               <p className="font-medium">Availability</p>
               <p className="text-sm">
@@ -163,10 +167,17 @@ const BookDetailsPage = () => {
           <div className="flex items-start justify-between">
             <h1 className="text-3xl font-bold text-library-800">{book.title}</h1>
             <Badge 
-              variant={book.available ? "default" : "outline"} 
-              className={`ml-2 ${book.available ? "" : "bg-amber-50 text-amber-700 border-amber-200"}`}
+              variant={isAvailable ? "default" : "outline"} 
+              className={`ml-2 ${isAvailable ? "" : "bg-amber-50 text-amber-700 border-amber-200"}`}
             >
-              {book.available ? "Available" : dueDate ? `Not Available until ${dueDate}` : "Not Available"}
+              {isAvailable 
+                ? book.digital 
+                  ? "Digital Resource" 
+                  : `Available (${book.quantity} copies)` 
+                : dueDate 
+                  ? `Not Available until ${dueDate}` 
+                  : "Not Available"
+              }
             </Badge>
           </div>
           

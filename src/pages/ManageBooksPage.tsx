@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +75,30 @@ const ManageBooksPage = () => {
       default:
         return <Book className="h-5 w-5" />;
     }
+  };
+
+  // Function to display availability status for a resource
+  const getAvailabilityDisplay = (resource: Resource) => {
+    if (resource.digital) {
+      return <Badge variant="default">Available</Badge>;
+    }
+    
+    if (resource.quantity !== undefined) {
+      if (resource.quantity > 0) {
+        return (
+          <div className="flex flex-col">
+            <Badge variant="default">Available</Badge>
+            <span className="text-xs mt-1">{resource.quantity} copies</span>
+          </div>
+        );
+      } else {
+        return <Badge variant="outline">Out of Stock</Badge>;
+      }
+    }
+    
+    return <Badge variant={resource.available ? "default" : "outline"}>
+      {resource.available ? "Available" : "Borrowed"}
+    </Badge>;
   };
 
   return (
@@ -153,9 +177,7 @@ const ManageBooksPage = () => {
                       <div className="text-sm text-gray-900">{resource.location}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={resource.available ? "default" : "outline"}>
-                        {resource.available ? "Available" : "Borrowed"}
-                      </Badge>
+                      {getAvailabilityDisplay(resource)}
                     </TableCell>
                     <TableCell>
                       <Button 
