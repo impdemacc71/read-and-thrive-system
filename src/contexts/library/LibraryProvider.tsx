@@ -1,6 +1,6 @@
 
-import React, { createContext, useContext } from 'react';
-import { mockResources, mockTransactions } from '@/data/mockData';
+import React, { createContext, useContext, useState } from 'react';
+import { resources, transactions } from '@/data/mockData';
 import { useResourceManagement } from './useResourceManagement';
 import { useTransactionManagement } from './useTransactionManagement';
 import { LibraryContextType } from './types';
@@ -8,9 +8,11 @@ import { LibraryContextType } from './types';
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
 export const LibraryProvider = ({ children }: { children: React.ReactNode }) => {
+  const [stateTransactions, setTransactions] = useState(transactions);
+  const [stateResources, setResources] = useState(resources);
+
   const {
-    resources,
-    setResources,
+    resources: managedResources,
     addResource,
     updateResource,
     searchResources,
@@ -18,21 +20,20 @@ export const LibraryProvider = ({ children }: { children: React.ReactNode }) => 
     getResourcesByCategory,
     getResourcesByType,
     scanIdentifier
-  } = useResourceManagement(mockResources, mockTransactions, setTransactions);
+  } = useResourceManagement(stateResources, stateTransactions, setTransactions);
 
   const {
-    transactions,
-    setTransactions,
+    transactions: managedTransactions,
     borrowResource,
     returnResource,
     calculateFine,
     reserveResource,
     getUserTransactions
-  } = useTransactionManagement(mockTransactions, resources, setResources);
+  } = useTransactionManagement(stateTransactions, managedResources, setResources);
 
   const value: LibraryContextType = {
-    resources,
-    transactions,
+    resources: managedResources,
+    transactions: managedTransactions,
     addResource,
     updateResource,
     searchResources,
