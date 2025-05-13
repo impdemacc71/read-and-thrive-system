@@ -1,50 +1,63 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { resources as initialResources, transactions as initialTransactions } from '@/data/mockData';
-import { LibraryContextType } from './types';
+import React, { createContext, useContext } from 'react';
+import { mockResources, mockTransactions } from '@/data/mockData';
 import { useResourceManagement } from './useResourceManagement';
 import { useTransactionManagement } from './useTransactionManagement';
+import { LibraryContextType } from './types';
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
-export const useLibrary = () => {
-  const context = useContext(LibraryContext);
-  if (!context) {
-    throw new Error('useLibrary must be used within a LibraryProvider');
-  }
-  return context;
-};
-
-export const LibraryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const resourceManagement = useResourceManagement(
-    initialResources, 
-    initialTransactions,
-    () => {} // Placeholder to be updated after initialization
-  );
-  
-  const { resources, setResources } = resourceManagement;
-  
-  const transactionManagement = useTransactionManagement(
-    initialTransactions,
+export const LibraryProvider = ({ children }: { children: React.ReactNode }) => {
+  const {
     resources,
-    setResources
-  );
-  
-  const { transactions, setTransactions } = transactionManagement;
-  
-  // Update the placeholder
-  resourceManagement.setResources = setResources;
-  
+    setResources,
+    addResource,
+    updateResource,
+    searchResources,
+    getResourceById,
+    getResourcesByCategory,
+    getResourcesByType,
+    scanIdentifier
+  } = useResourceManagement(mockResources, mockTransactions, setTransactions);
+
+  const {
+    transactions,
+    setTransactions,
+    borrowResource,
+    returnResource,
+    calculateFine,
+    reserveResource,
+    getUserTransactions
+  } = useTransactionManagement(mockTransactions, resources, setResources);
+
+  const value: LibraryContextType = {
+    resources,
+    transactions,
+    addResource,
+    updateResource,
+    searchResources,
+    getResourceById,
+    getResourcesByCategory,
+    getResourcesByType,
+    borrowResource,
+    returnResource,
+    calculateFine,
+    reserveResource,
+    getUserTransactions,
+    scanIdentifier
+  };
+
   return (
-    <LibraryContext.Provider
-      value={{
-        resources,
-        transactions,
-        ...resourceManagement,
-        ...transactionManagement,
-      }}
-    >
+    <LibraryContext.Provider value={value}>
       {children}
     </LibraryContext.Provider>
   );
+};
+
+export const useLibrary = () => {
+  const context = useContext(LibraryContext);
+  if (context === undefined) {
+    throw new Error('useLibrary must be used within a LibraryProvider');
+  }
+  return context;
 };

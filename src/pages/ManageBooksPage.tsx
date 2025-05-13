@@ -10,11 +10,14 @@ import { Resource, ResourceType } from '@/data/mockData';
 import SearchBar from '@/components/SearchBar';
 import IdentifierScanner from '@/components/IdentifierScanner';
 import MetadataEditor from '@/components/MetadataEditor';
+import EditResourceDialog from '@/components/EditResourceDialog';
 import { 
   Book, 
   FileText, 
   FileAudio, 
-  FileVideo 
+  FileVideo,
+  Edit,
+  Eye
 } from 'lucide-react';
 import {
   Table,
@@ -30,6 +33,7 @@ const ManageBooksPage = () => {
   const { resources, addResource, searchResources } = useLibrary();
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState<Resource[]>(resources);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
   
   // Extract unique categories and resource types
   const categories = Array.from(new Set(resources.map(resource => resource.category)));
@@ -180,13 +184,24 @@ const ManageBooksPage = () => {
                       {getAvailabilityDisplay(resource)}
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => navigate(`/book/${resource.id}`)}
-                      >
-                        View
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => navigate(`/book/${resource.id}`)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingResource(resource)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -195,6 +210,14 @@ const ManageBooksPage = () => {
           </Card>
         </div>
       </div>
+
+      {editingResource && (
+        <EditResourceDialog
+          resource={editingResource}
+          isOpen={!!editingResource}
+          onClose={() => setEditingResource(null)}
+        />
+      )}
     </div>
   );
 };

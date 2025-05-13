@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { Resource, Transaction } from '@/data/mockData';
+import { Resource, Transaction, ResourceType } from '@/data/mockData';
 
 export function useTransactionManagement(
   initialTransactions: Transaction[],
@@ -23,13 +23,16 @@ export function useTransactionManagement(
     }
     
     // For physical resources, check quantity
-    if (resource.type === 'physical' && resource.quantity !== undefined && resource.quantity <= 0) {
-      toast({
-        title: "Error",
-        description: "This physical resource is out of stock.",
-        variant: "destructive",
-      });
-      return;
+    if (resource.type === 'book' || resource.type === 'journal') {
+      // Physical resources should have quantity property
+      if (!resource.digital && resource.quantity !== undefined && resource.quantity <= 0) {
+        toast({
+          title: "Error",
+          description: "This physical resource is out of stock.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Create a new transaction
@@ -56,13 +59,14 @@ export function useTransactionManagement(
       prevResources.map(r => {
         if (r.id === resourceId) {
           // For physical resources, decrement quantity
-          if (r.type === 'physical') {
+          if ((r.type === 'book' || r.type === 'journal') && !r.digital) {
             const newQuantity = ((r.quantity !== undefined ? r.quantity : 1) - 1);
+            // Resource is still available if there are copies left
             const available = newQuantity > 0;
             return { ...r, quantity: newQuantity, available };
           }
-          // For e-resources, keep available as true
-          if (r.type === 'electronic') {
+          // For e-resources, keep available as true since multiple people can access
+          if (r.digital) {
             return r;
           }
           // Default behavior for other types
@@ -122,7 +126,7 @@ export function useTransactionManagement(
       prevResources.map(r => {
         if (r.id === transaction.resourceId) {
           // For physical resources, increment quantity
-          if (r.type === 'physical') {
+          if ((r.type === 'book' || r.type === 'journal') && !r.digital) {
             const newQuantity = ((r.quantity !== undefined ? r.quantity : 0) + 1);
             return { ...r, quantity: newQuantity, available: true };
           }

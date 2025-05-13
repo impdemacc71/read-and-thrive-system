@@ -25,6 +25,32 @@ export function useResourceManagement(
     });
   };
 
+  const updateResource = (id: string, resourceData: Partial<Resource>) => {
+    const resourceExists = resources.find(resource => resource.id === id);
+    
+    if (!resourceExists) {
+      toast({
+        title: "Error",
+        description: "Resource not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResources(prev =>
+      prev.map(resource =>
+        resource.id === id ? { ...resource, ...resourceData } : resource
+      )
+    );
+
+    toast({
+      title: "Resource Updated",
+      description: `"${resourceData.title || resourceExists.title}" has been updated.`,
+    });
+
+    return true;
+  };
+
   const searchResources = (query: string): Resource[] => {
     if (!query.trim()) return resources;
     
@@ -71,6 +97,7 @@ export function useResourceManagement(
     resources,
     setResources,
     addResource,
+    updateResource,
     searchResources,
     getResourceById,
     getResourcesByCategory,

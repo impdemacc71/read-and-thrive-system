@@ -1,18 +1,19 @@
 
-import { Resource, Transaction } from '@/data/mockData';
+import { Resource, Transaction } from "@/data/mockData";
 
 export interface LibraryContextType {
   resources: Resource[];
   transactions: Transaction[];
-  borrowResource: (userId: string, resourceId: string, dueDate?: string) => void;
-  returnResource: (transactionId: string) => void;
   addResource: (resource: Omit<Resource, 'id'>) => void;
+  updateResource: (id: string, resource: Partial<Resource>) => boolean;
   searchResources: (query: string) => Resource[];
   getResourceById: (id: string) => Resource | undefined;
-  getUserTransactions: (userId: string) => Transaction[];
   getResourcesByCategory: (category: string) => Resource[];
   getResourcesByType: (type: string) => Resource[];
-  scanIdentifier: (identifier: string) => Resource | undefined;
-  reserveResource: (userId: string, resourceId: string) => void;
+  borrowResource: (userId: string, resourceId: string, selectedDueDate?: string) => void;
+  returnResource: (transactionId: string) => void;
   calculateFine: (transaction: Transaction) => number;
+  reserveResource: (userId: string, resourceId: string) => void;
+  getUserTransactions: (userId: string) => Transaction[];
+  scanIdentifier: (identifier: string) => Resource | undefined;
 }
