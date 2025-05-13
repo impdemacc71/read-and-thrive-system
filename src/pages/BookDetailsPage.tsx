@@ -6,16 +6,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, BookmarkPlus } from 'lucide-react';
 import EditResourceDialog from '@/components/EditResourceDialog';
 
 const BookDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { getResourceById, borrowResource, calculateFine } = useLibrary();
+  const { getResourceById, borrowResource, reserveResource } = useLibrary();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -43,6 +42,15 @@ const BookDetailsPage = () => {
     
     const dueDateString = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined;
     borrowResource(currentUser.id, resource.id, dueDateString);
+  };
+
+  const handleReserve = () => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    
+    reserveResource(currentUser.id, resource.id);
   };
 
   // Maximum due date is 10 days from today
@@ -111,116 +119,110 @@ const BookDetailsPage = () => {
             </Badge>
           </div>
           
-          <Tabs defaultValue="details">
-            <TabsList>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="borrow">Borrow</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Publisher</p>
-                      <p>{resource.publisher}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Published Date</p>
-                      <p>{resource.published}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Location</p>
-                      <p>{resource.location}</p>
-                    </div>
-                    {resource.isbn && (
-                      <div>
-                        <p className="text-sm text-gray-500">ISBN</p>
-                        <p>{resource.isbn}</p>
-                      </div>
-                    )}
-                    {resource.doi && (
-                      <div>
-                        <p className="text-sm text-gray-500">DOI</p>
-                        <p>{resource.doi}</p>
-                      </div>
-                    )}
-                    {resource.issn && (
-                      <div>
-                        <p className="text-sm text-gray-500">ISSN</p>
-                        <p>{resource.issn}</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-1">Description</p>
-                    <p>{resource.description}</p>
-                  </div>
-                  
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-500">Publisher</p>
+                  <p>{resource.publisher}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Published Date</p>
+                  <p>{resource.published}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Location</p>
+                  <p>{resource.location}</p>
+                </div>
+                {resource.isbn && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Keywords</p>
-                    <div className="flex flex-wrap gap-2">
-                      {resource.keywords.map((keyword, index) => (
-                        <Badge key={index} variant="secondary">{keyword}</Badge>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500">ISBN</p>
+                    <p>{resource.isbn}</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="borrow">
-              <Card>
-                <CardContent className="pt-6">
-                  {!currentUser ? (
-                    <div className="text-center p-4">
-                      <p className="mb-4">Please log in to borrow resources.</p>
-                      <Button onClick={() => navigate('/login')}>Log In</Button>
-                    </div>
-                  ) : !isResourceAvailable() ? (
-                    <div className="text-center p-4">
-                      <p className="mb-4">This resource is currently not available.</p>
-                      <Button variant="outline">Request Notification</Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-sm text-gray-500 mb-2">Select Due Date</p>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left">
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={selectedDate}
-                              onSelect={setSelectedDate}
-                              disabled={(date) => 
-                                date < new Date() || // Can't select dates in the past
-                                date > maxDate // Can't select dates more than 10 days away
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          You can borrow this resource for up to 10 days.
-                        </p>
-                      </div>
-                      
-                      <Button className="w-full" onClick={handleBorrow}>
-                        Borrow This Resource
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                )}
+                {resource.doi && (
+                  <div>
+                    <p className="text-sm text-gray-500">DOI</p>
+                    <p>{resource.doi}</p>
+                  </div>
+                )}
+                {resource.issn && (
+                  <div>
+                    <p className="text-sm text-gray-500">ISSN</p>
+                    <p>{resource.issn}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 mb-1">Description</p>
+                <p>{resource.description}</p>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-2">Keywords</p>
+                <div className="flex flex-wrap gap-2">
+                  {resource.keywords.map((keyword, index) => (
+                    <Badge key={index} variant="secondary">{keyword}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Borrow/Reserve section */}
+              {!currentUser ? (
+                <div className="text-center p-4 border-t border-gray-200 mt-4">
+                  <p className="mb-4">Please log in to borrow or reserve resources.</p>
+                  <Button onClick={() => navigate('/login')}>Log In</Button>
+                </div>
+              ) : isResourceAvailable() ? (
+                <div className="space-y-6 border-t border-gray-200 pt-4">
+                  <h3 className="font-medium text-lg">Borrow This Resource</h3>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">Select Due Date</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          disabled={(date) => 
+                            date < new Date() || // Can't select dates in the past
+                            date > maxDate // Can't select dates more than 10 days away
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You can borrow this resource for up to 10 days.
+                    </p>
+                  </div>
+                  
+                  <Button className="w-full" onClick={handleBorrow}>
+                    Borrow This Resource
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center p-4 border-t border-gray-200 mt-4">
+                  <h3 className="font-medium text-lg mb-4">Resource Currently Unavailable</h3>
+                  <p className="mb-4">This resource is currently borrowed by other users.</p>
+                  <Button 
+                    variant="outline" 
+                    className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                    onClick={handleReserve}
+                  >
+                    <BookmarkPlus className="h-4 w-4 mr-2" /> Reserve for When Available
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
