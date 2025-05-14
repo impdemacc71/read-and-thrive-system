@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Resource, Transaction, ResourceType } from '@/data/mockData';
@@ -197,7 +198,7 @@ export function useTransactionManagement(
       toast({
         title: "Resource Partially Available",
         description: `This resource is borrowed until ${conflictingTransaction.dueDate}. Your reservation will be queued.`,
-        variant: "warning",
+        variant: "destructive", // Changed from "warning" to "destructive" to match allowed variants
       });
     }
 
