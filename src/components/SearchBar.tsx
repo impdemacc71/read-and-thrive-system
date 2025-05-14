@@ -1,8 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search } from 'lucide-react';
+import { debounce } from 'lodash';
 
 interface SearchBarProps {
   onSearch: (query: string, category: string, type: string) => void;
@@ -14,44 +16,58 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, categories, resourceTyp
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
-
-  // Use debounce to avoid too many search calls
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim() !== '') {
-        onSearch(searchQuery, selectedCategory, selectedType);
+  
+  // Create a debounced search function that only executes after user stops typing
+  const debouncedSearch = useCallback(
+    debounce((query: string, category: string, type: string) => {
+      if (query.trim() !== '') {
+        onSearch(query, category, type);
       }
-    }, 300); // 300ms debounce
+    }, 500),
+    [onSearch]
+  );
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategory, selectedType, onSearch]);
+  // Using the debounced function when input changes
+  useEffect(() => {
+    if (searchQuery.trim() !== '') {
+      debouncedSearch(searchQuery, selectedCategory, selectedType);
+    }
+    
+    // Cleanup function to cancel pending debounced calls
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery, selectedCategory, selectedType, debouncedSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // Immediate search on button click - cancels any pending debounced searches
+    debouncedSearch.cancel();
     onSearch(searchQuery, selectedCategory, selectedType);
   };
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    // Category changes trigger search immediately
     onSearch(searchQuery, value, selectedType);
   };
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
-    // Type changes trigger search immediately
     onSearch(searchQuery, selectedCategory, value);
   };
 
   return (
     <form onSubmit={handleSearch} className="w-full flex flex-col sm:flex-row gap-3">
-      <Input
-        type="text"
-        placeholder="Search for resources..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="flex-grow"
-      />
+      <div className="relative flex-grow">
+        <Input
+          type="text"
+          placeholder="Search for resources..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      </div>
       
       <Select
         value={selectedCategory}

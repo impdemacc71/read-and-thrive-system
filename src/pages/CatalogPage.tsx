@@ -26,11 +26,12 @@ const CatalogPage = () => {
       return;
     }
 
-    // Simulate loading data
+    // Initial load of resources
+    setLoading(true);
     const timer = setTimeout(() => {
       setFilteredResources(resources);
       setLoading(false);
-    }, 300); // Reduced loading time for better UX
+    }, 300);
     
     return () => clearTimeout(timer);
   }, [resources, isAuthenticated, navigate]);
@@ -38,6 +39,7 @@ const CatalogPage = () => {
   const handleSearch = (query: string, category: string, type: string) => {
     setLoading(true);
     
+    // Small timeout to show loading state for better UX
     setTimeout(() => {
       let results = searchResources(query);
       
@@ -51,7 +53,7 @@ const CatalogPage = () => {
       
       setFilteredResources(results);
       setLoading(false);
-    }, 200); // Faster search response for better UX
+    }, 200);
   };
 
   const handleResourceClick = (resourceId: string) => {

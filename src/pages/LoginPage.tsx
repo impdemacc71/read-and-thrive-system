@@ -30,7 +30,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen w-screen flex">
       {/* Login form section - left side */}
       <div className="w-full md:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-white">
         <Card className="w-full max-w-md">
@@ -104,10 +104,11 @@ const LoginPage = () => {
       </div>
 
       {/* Background image section - right side */}
-      <div className="hidden md:block md:w-1/2 bg-cover bg-center" style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&q=80')",
-        backgroundSize: "cover"
-      }}>
+      <div className="hidden md:block md:w-1/2 bg-cover bg-center" 
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80')",
+        }}
+      >
         <div className="h-full w-full flex items-center justify-center bg-black bg-opacity-50">
           <div className="text-center p-8 max-w-lg">
             <h1 className="text-4xl font-bold text-white mb-4">Welcome to UniLib</h1>
