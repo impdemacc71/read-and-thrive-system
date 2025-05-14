@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Edit, BookmarkPlus } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, BookmarkPlus, ArrowLeft } from 'lucide-react';
 import EditResourceDialog from '@/components/EditResourceDialog';
 
 const BookDetailsPage = () => {
@@ -71,6 +71,16 @@ const BookDetailsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/catalog')}
+        className="mb-6 hover:bg-gray-100"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Catalog
+      </Button>
+      
       <div className="flex flex-wrap md:flex-nowrap gap-8">
         {/* Left column - Resource image */}
         <div className="w-full md:w-1/3">

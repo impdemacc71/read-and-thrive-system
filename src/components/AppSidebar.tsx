@@ -15,7 +15,7 @@ import {
   SidebarSeparator,
   useSidebar
 } from "@/components/ui/sidebar";
-import { Book, BookOpen, LayoutDashboard, Library, LineChart, LogOut, User } from "lucide-react";
+import { Book, BookOpen, LayoutDashboard, Library, LineChart, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 
 const AppSidebar = () => {
@@ -35,7 +35,7 @@ const AppSidebar = () => {
           className="flex items-center gap-2 px-4 py-3"
         >
           <Library className="h-6 w-6 text-library-accent" />
-          <span className="font-semibold text-lg">University Library</span>
+          <span className="font-semibold text-lg">UniLib</span>
         </Link>
       </SidebarHeader>
       

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import BookCard from '@/components/BookCard';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Resource } from '@/data/mockData';
 
 const CatalogPage = () => {
-  const { resources, borrowResource, searchResources, reserveResource } = useLibrary();
+  const { resources, searchResources } = useLibrary();
   const { currentUser, isAuthenticated } = useAuth();
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ const CatalogPage = () => {
     const timer = setTimeout(() => {
       setFilteredResources(resources);
       setLoading(false);
-    }, 500);
+    }, 300); // Reduced loading time for better UX
     
     return () => clearTimeout(timer);
   }, [resources, isAuthenticated, navigate]);
@@ -51,19 +51,11 @@ const CatalogPage = () => {
       
       setFilteredResources(results);
       setLoading(false);
-    }, 300);
+    }, 200); // Faster search response for better UX
   };
 
-  const handleBorrow = (resourceId: string) => {
-    if (currentUser) {
-      navigate(`/book/${resourceId}`);
-    }
-  };
-
-  const handleReserve = (resourceId: string) => {
-    if (currentUser) {
-      navigate(`/book/${resourceId}`);
-    }
+  const handleResourceClick = (resourceId: string) => {
+    navigate(`/book/${resourceId}`);
   };
 
   if (!isAuthenticated) {
@@ -72,7 +64,7 @@ const CatalogPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4 text-library-800 md:mb-8">Library Catalog</h1>
+      <h1 className="text-3xl font-bold mb-4 text-library-800 md:mb-8">UniLib Catalog</h1>
       
       <div className="mb-6 md:mb-8">
         <SearchBar 
@@ -94,10 +86,7 @@ const CatalogPage = () => {
             <BookCard
               key={resource.id}
               book={resource}
-              onBorrow={resource.available ? 
-                () => handleBorrow(resource.id) : 
-                () => handleReserve(resource.id)
-              }
+              onBorrow={() => handleResourceClick(resource.id)}
               showBorrowButton={true}
             />
           ))}
@@ -113,7 +102,7 @@ const CatalogPage = () => {
               setTimeout(() => {
                 setFilteredResources(resources);
                 setLoading(false);
-              }, 300);
+              }, 200);
             }}
           >
             Reset Search

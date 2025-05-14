@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,9 +15,32 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, categories, resourceTyp
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
 
+  // Use debounce to avoid too many search calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim() !== '') {
+        onSearch(searchQuery, selectedCategory, selectedType);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory, selectedType, onSearch]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchQuery, selectedCategory, selectedType);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    // Category changes trigger search immediately
+    onSearch(searchQuery, value, selectedType);
+  };
+
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+    // Type changes trigger search immediately
+    onSearch(searchQuery, selectedCategory, value);
   };
 
   return (
@@ -32,7 +55,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, categories, resourceTyp
       
       <Select
         value={selectedCategory}
-        onValueChange={setSelectedCategory}
+        onValueChange={handleCategoryChange}
       >
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Category" />
@@ -50,7 +73,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, categories, resourceTyp
       {resourceTypes.length > 0 && (
         <Select
           value={selectedType}
-          onValueChange={setSelectedType}
+          onValueChange={handleTypeChange}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Resource Type" />
