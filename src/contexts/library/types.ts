@@ -13,7 +13,7 @@ export interface LibraryContextType {
   borrowResource: (userId: string, resourceId: string, selectedDueDate?: string) => void;
   returnResource: (transactionId: string) => void;
   calculateFine: (transaction: Transaction) => number;
-  reserveResource: (userId: string, resourceId: string) => void;
+  reserveResource: (userId: string, resourceId: string, fromDate?: string, toDate?: string) => void;
   getUserTransactions: (userId: string) => Transaction[];
   scanIdentifier: (identifier: string) => Resource | undefined;
 }

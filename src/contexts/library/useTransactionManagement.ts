@@ -163,7 +163,7 @@ export function useTransactionManagement(
     return daysOverdue * 1; // $1 per day
   };
 
-  const reserveResource = (userId: string, resourceId: string) => {
+  const reserveResource = (userId: string, resourceId: string, fromDate?: string, toDate?: string) => {
     // Check if resource exists
     const resource = resources.find(r => r.id === resourceId);
     if (!resource) {
@@ -175,29 +175,39 @@ export function useTransactionManagement(
       return;
     }
 
-    // Check if there's an active transaction for this resource
-    const activeTransaction = transactions.find(
-      t => t.resourceId === resourceId && t.status === 'borrowed' && !t.returnDate
+    // Default dates if not provided
+    const reservationFromDate = fromDate || new Date().toISOString().split('T')[0];
+    const reservationToDate = toDate || (() => {
+      const defaultDueDate = new Date();
+      defaultDueDate.setDate(defaultDueDate.getDate() + 10); // Default to 10 days
+      return defaultDueDate.toISOString().split('T')[0];
+    })();
+
+    // Check if there's a conflict with existing transactions during the requested period
+    const conflictingTransaction = transactions.find(t => 
+      t.resourceId === resourceId && 
+      t.status === 'borrowed' &&
+      !t.returnDate &&
+      // Check if the requested period overlaps with an existing transaction
+      ((new Date(t.checkoutDate) <= new Date(reservationToDate) && new Date(t.dueDate) >= new Date(reservationFromDate)))
     );
 
-    if (!activeTransaction) {
+    if (conflictingTransaction) {
+      // If there's a conflict, we can still allow reservation but inform the user
       toast({
-        title: "Error",
-        description: "This resource is not currently borrowed. You can borrow it directly.",
-        variant: "destructive",
+        title: "Resource Partially Available",
+        description: `This resource is borrowed until ${conflictingTransaction.dueDate}. Your reservation will be queued.`,
+        variant: "warning",
       });
-      return;
     }
 
     // Create a reservation transaction
-    const reservationDate = new Date().toISOString().split('T')[0];
-    
     const newTransaction: Transaction = {
       id: `${transactions.length + 1}`,
       userId,
       resourceId,
-      checkoutDate: activeTransaction.dueDate, // Will be available after due date
-      dueDate: '', // Will be set when actually borrowed
+      checkoutDate: reservationFromDate,
+      dueDate: reservationToDate,
       returnDate: null,
       status: 'reserved',
     };
@@ -207,7 +217,7 @@ export function useTransactionManagement(
 
     toast({
       title: "Resource Reserved",
-      description: `You have successfully reserved "${resource.title}". You will be notified when it becomes available.`,
+      description: `You have successfully reserved "${resource.title}" from ${new Date(reservationFromDate).toLocaleDateString()} to ${new Date(reservationToDate).toLocaleDateString()}.`,
     });
   };
 

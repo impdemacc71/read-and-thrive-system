@@ -22,6 +22,13 @@ const BookDetailsPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date(new Date().setDate(new Date().getDate() + 10))
   );
+
+  // For reservation date range
+  const [reservationFromDate, setReservationFromDate] = useState<Date | undefined>(new Date());
+  const [reservationToDate, setReservationToDate] = useState<Date | undefined>(
+    new Date(new Date().setDate(new Date().getDate() + 10))
+  );
+  const [activeReservationCalendar, setActiveReservationCalendar] = useState<'from' | 'to'>('from');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   if (!resource) {
@@ -50,12 +57,17 @@ const BookDetailsPage = () => {
       return;
     }
     
-    reserveResource(currentUser.id, resource.id);
+    const fromDateString = reservationFromDate ? format(reservationFromDate, 'yyyy-MM-dd') : undefined;
+    const toDateString = reservationToDate ? format(reservationToDate, 'yyyy-MM-dd') : undefined;
+    
+    reserveResource(currentUser.id, resource.id, fromDateString, toDateString);
   };
 
   // Maximum due date is 10 days from today
   const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 10);
+  maxDate.setDate(maxDate.getDate() + 30); // Extended to 30 days for reservations
+  
+  const minDate = new Date();
 
   const isResourceAvailable = () => {
     if (resource.digital) return true;
@@ -131,6 +143,7 @@ const BookDetailsPage = () => {
           
           <Card>
             <CardContent className="pt-6">
+              {/* Resource details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Publisher</p>
@@ -206,6 +219,7 @@ const BookDetailsPage = () => {
                             date > maxDate // Can't select dates more than 10 days away
                           }
                           initialFocus
+                          className="p-3 pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
@@ -219,16 +233,81 @@ const BookDetailsPage = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="text-center p-4 border-t border-gray-200 mt-4">
-                  <h3 className="font-medium text-lg mb-4">Resource Currently Unavailable</h3>
+                <div className="space-y-6 border-t border-gray-200 pt-4">
+                  <h3 className="font-medium text-lg">Resource Currently Unavailable</h3>
                   <p className="mb-4">This resource is currently borrowed by other users.</p>
-                  <Button 
-                    variant="outline" 
-                    className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
-                    onClick={handleReserve}
-                  >
-                    <BookmarkPlus className="h-4 w-4 mr-2" /> Reserve for When Available
-                  </Button>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Reserve for a Specific Period</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* From Date */}
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">From Date</p>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="w-full justify-start text-left"
+                              onClick={() => setActiveReservationCalendar('from')}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {reservationFromDate ? format(reservationFromDate, 'PPP') : 'Select start date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={reservationFromDate}
+                              onSelect={setReservationFromDate}
+                              disabled={(date) => 
+                                date < minDate || date > maxDate
+                              }
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      {/* To Date */}
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">To Date</p>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="w-full justify-start text-left"
+                              onClick={() => setActiveReservationCalendar('to')}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {reservationToDate ? format(reservationToDate, 'PPP') : 'Select end date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={reservationToDate}
+                              onSelect={setReservationToDate}
+                              disabled={(date) => 
+                                (reservationFromDate ? date < reservationFromDate : date < minDate) || date > maxDate
+                              }
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                      onClick={handleReserve}
+                    >
+                      <BookmarkPlus className="h-4 w-4 mr-2" /> Reserve for Selected Period
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

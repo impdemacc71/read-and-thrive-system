@@ -1,10 +1,9 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { debounce } from 'lodash';
 
 interface SearchBarProps {
   onSearch: (query: string, category: string, type: string) => void;
@@ -16,44 +15,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, categories, resourceTyp
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
-  
-  // Create a debounced search function that only executes after user stops typing
-  const debouncedSearch = useCallback(
-    debounce((query: string, category: string, type: string) => {
-      if (query.trim() !== '') {
-        onSearch(query, category, type);
-      }
-    }, 500),
-    [onSearch]
-  );
-
-  // Using the debounced function when input changes
-  useEffect(() => {
-    if (searchQuery.trim() !== '') {
-      debouncedSearch(searchQuery, selectedCategory, selectedType);
-    }
-    
-    // Cleanup function to cancel pending debounced calls
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [searchQuery, selectedCategory, selectedType, debouncedSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Immediate search on button click - cancels any pending debounced searches
-    debouncedSearch.cancel();
     onSearch(searchQuery, selectedCategory, selectedType);
   };
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    onSearch(searchQuery, value, selectedType);
   };
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
-    onSearch(searchQuery, selectedCategory, value);
   };
 
   return (
