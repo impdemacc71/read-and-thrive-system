@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLibrary } from '@/contexts/library';
@@ -11,6 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Edit, BookmarkPlus, ArrowLeft } from 'lucide-react';
 import EditResourceDialog from '@/components/EditResourceDialog';
+import QRCodePrint from '@/components/QRCodePrint';
 
 const BookDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -111,13 +111,16 @@ const BookDetailsPage = () => {
             <h1 className="text-3xl font-bold text-library-800">{resource.title}</h1>
             
             {isAdmin && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsEditDialogOpen(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" /> Edit
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsEditDialogOpen(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" /> Edit
+                </Button>
+                <QRCodePrint resource={resource} />
+              </div>
             )}
           </div>
           
@@ -173,6 +176,12 @@ const BookDetailsPage = () => {
                   <div>
                     <p className="text-sm text-gray-500">ISSN</p>
                     <p>{resource.issn}</p>
+                  </div>
+                )}
+                {resource.qrId && (
+                  <div>
+                    <p className="text-sm text-gray-500">QR Code ID</p>
+                    <p>{resource.qrId}</p>
                   </div>
                 )}
               </div>

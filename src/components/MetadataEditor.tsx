@@ -1,488 +1,438 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Resource, ResourceType } from '@/data/mockData';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Book, FileText, FileAudio, FileVideo, FileImage } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { generateUniqueQRId } from '@/utils/qrCodeUtils';
+
+const resourceFormSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  author: z.string().min(2, {
+    message: "Author must be at least 2 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  cover: z.string().url({
+    message: "Cover must be a valid URL.",
+  }),
+  category: z.string().min(2, {
+    message: "Category must be at least 2 characters.",
+  }),
+  type: z.string().min(2, {
+    message: "Type must be at least 2 characters.",
+  }),
+  language: z.string().min(2, {
+    message: "Language must be at least 2 characters.",
+  }),
+  publisher: z.string().min(2, {
+    message: "Publisher must be at least 2 characters.",
+  }),
+  published: z.string().min(4, {
+    message: "Published date must be at least 4 characters.",
+  }),
+  location: z.string().min(2, {
+    message: "Location must be at least 2 characters.",
+  }),
+  isbn: z.string().optional(),
+  issn: z.string().optional(),
+  doi: z.string().optional(),
+  barcode: z.string().optional(),
+  keywords: z.string().array().optional(),
+  digital: z.boolean().default(false),
+  available: z.boolean().default(true),
+  quantity: z.number().optional(),
+  qrId: z.string().optional(),
+});
+
+interface ResourceFormData extends z.infer<typeof resourceFormSchema> {}
 
 interface MetadataEditorProps {
-  initialData?: Partial<Resource>;
-  onSave: (data: Omit<Resource, 'id'>) => void;
+  initialData?: Partial<ResourceFormData>;
+  onSave: (data: ResourceFormData) => void;
 }
 
-const MetadataEditor: React.FC<MetadataEditorProps> = ({ initialData, onSave }) => {
-  const { toast } = useToast();
-  const [resourceType, setResourceType] = useState<ResourceType>(
-    initialData?.type || 'book'
-  );
-  const [isDigital, setIsDigital] = useState(initialData?.digital || false);
-  const [keywords, setKeywords] = useState<string[]>(initialData?.keywords || []);
-  const [keywordInput, setKeywordInput] = useState('');
-
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<Omit<Resource, 'id'>>({
+const MetadataEditor = ({ initialData, onSave }: MetadataEditorProps) => {
+  const form = useForm<ResourceFormData>({
+    resolver: zodResolver(resourceFormSchema),
     defaultValues: {
-      ...initialData,
-      title: initialData?.title || '',
-      author: initialData?.author || '',
-      type: initialData?.type || 'book',
-      publisher: initialData?.publisher || '',
-      published: initialData?.published || new Date().toISOString().split('T')[0],
-      category: initialData?.category || 'Science',
-      description: initialData?.description || '',
-      available: initialData?.available !== undefined ? initialData.available : true,
-      location: initialData?.location || '',
-      digital: initialData?.digital || false,
-      language: initialData?.language || 'English',
-      dateAdded: initialData?.dateAdded || new Date().toISOString().split('T')[0],
+      title: initialData?.title || "",
+      author: initialData?.author || "",
+      description: initialData?.description || "",
+      cover: initialData?.cover || "",
+      category: initialData?.category || "",
+      type: initialData?.type || "",
+      language: initialData?.language || "",
+      publisher: initialData?.publisher || "",
+      published: initialData?.published || "",
+      location: initialData?.location || "",
+      isbn: initialData?.isbn || "",
+      issn: initialData?.issn || "",
+      doi: initialData?.doi || "",
+      barcode: initialData?.barcode || "",
       keywords: initialData?.keywords || [],
-      cover: initialData?.cover || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400',
-      quantity: initialData?.quantity || 1, // Default to 1 copy
+      digital: initialData?.digital || false,
+      available: initialData?.available || true,
+      quantity: initialData?.quantity || 1,
+      qrId: initialData?.qrId || "",
     },
   });
 
-  const handleAddKeyword = () => {
-    if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
-      const newKeywords = [...keywords, keywordInput.trim()];
-      setKeywords(newKeywords);
-      setValue('keywords', newKeywords);
-      setKeywordInput('');
-    }
-  };
-
-  const handleRemoveKeyword = (keyword: string) => {
-    const newKeywords = keywords.filter(k => k !== keyword);
-    setKeywords(newKeywords);
-    setValue('keywords', newKeywords);
-  };
-
-  const handleFormSubmit = (data: Omit<Resource, 'id'>) => {
-    // Ensure keywords are included
-    const completeData = {
+  const handleSubmit = (data: ResourceFormData) => {
+    // Generate QR ID if not present (for new resources)
+    const resourceData = {
       ...data,
-      keywords: keywords,
-      digital: isDigital,
+      qrId: initialData?.qrId || generateUniqueQRId(),
     };
     
-    // For physical resources, ensure quantity is set
-    if (!isDigital && (resourceType === 'book' || resourceType === 'journal')) {
-      completeData.quantity = completeData.quantity || 1;
-      // Set available status based on quantity
-      completeData.available = (completeData.quantity > 0);
-    } else if (isDigital) {
-      // Digital resources don't have quantity, always available
-      delete completeData.quantity;
-      completeData.available = true;
-    }
-    
-    onSave(completeData);
-    
-    toast({
-      title: "Success",
-      description: "Resource metadata has been saved.",
-    });
-    
-    reset();
-  };
-
-  const renderTypeSpecificFields = () => {
-    switch (resourceType) {
-      case 'book':
-      case 'ebook':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="isbn">ISBN</Label>
-              <Input
-                id="isbn"
-                {...register('isbn')}
-                placeholder="e.g., 978-3-16-148410-0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode</Label>
-              <Input 
-                id="barcode" 
-                {...register('barcode')} 
-                placeholder="e.g., 9783161484100"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edition">Edition</Label>
-              <Input
-                id="edition"
-                {...register('edition')}
-                placeholder="e.g., 3rd"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pages">Pages</Label>
-              <Input
-                id="pages"
-                type="number"
-                {...register('pages', { valueAsNumber: true })}
-                placeholder="e.g., 450"
-              />
-            </div>
-            {!isDigital && (
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  {...register('quantity', { valueAsNumber: true, min: 0 })}
-                  placeholder="e.g., 5"
-                />
-                {errors.quantity && <p className="text-red-500 text-sm">Quantity must be 0 or greater</p>}
-              </div>
-            )}
-          </div>
-        );
-      case 'journal':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="issn">ISSN</Label>
-              <Input
-                id="issn"
-                {...register('issn')}
-                placeholder="e.g., 2163-0429"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pages">Pages</Label>
-              <Input
-                id="pages"
-                type="number"
-                {...register('pages', { valueAsNumber: true })}
-                placeholder="e.g., 120"
-              />
-            </div>
-          </div>
-        );
-      case 'article':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="doi">DOI</Label>
-              <Input
-                id="doi"
-                {...register('doi')}
-                placeholder="e.g., 10.1145/3582016"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pages">Pages</Label>
-              <Input
-                id="pages"
-                type="number"
-                {...register('pages', { valueAsNumber: true })}
-                placeholder="e.g., 18"
-              />
-            </div>
-          </div>
-        );
-      case 'audio':
-      case 'video':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode</Label>
-              <Input
-                id="barcode"
-                {...register('barcode')}
-                placeholder="e.g., 0045678901234"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fileFormat">File Format</Label>
-              <Input
-                id="fileFormat"
-                {...register('fileFormat')}
-                placeholder="e.g., MP3, MP4"
-              />
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getTypeIcon = () => {
-    switch (resourceType) {
-      case 'book':
-      case 'ebook':
-        return <Book className="h-5 w-5" />;
-      case 'journal':
-      case 'article':
-        return <FileText className="h-5 w-5" />;
-      case 'audio':
-        return <FileAudio className="h-5 w-5" />;
-      case 'video':
-        return <FileVideo className="h-5 w-5" />;
-      default:
-        return <FileImage className="h-5 w-5" />;
+    onSave(resourceData);
+    if (!initialData) {
+      form.reset();
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          {getTypeIcon()}
-          <CardTitle>Resource Metadata</CardTitle>
-        </div>
-        <CardDescription>
-          Enter the metadata for the resource.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                {...register('title', { required: true })}
-                className={errors.title ? "border-red-500" : ""}
-              />
-              {errors.title && <p className="text-red-500 text-sm">Title is required</p>}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="author">Author/Creator</Label>
-              <Input
-                id="author"
-                {...register('author', { required: true })}
-                className={errors.author ? "border-red-500" : ""}
-              />
-              {errors.author && <p className="text-red-500 text-sm">Author is required</p>}
-            </div>
-          </div>
-          
-          {/* Type and Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Resource Type</Label>
-              <Select
-                value={resourceType}
-                onValueChange={(value: ResourceType) => {
-                  setResourceType(value);
-                  setValue('type', value);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select resource type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="book">Book</SelectItem>
-                  <SelectItem value="journal">Journal</SelectItem>
-                  <SelectItem value="ebook">E-Book</SelectItem>
-                  <SelectItem value="article">Article</SelectItem>
-                  <SelectItem value="audio">Audio</SelectItem>
-                  <SelectItem value="video">Video</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                defaultValue={initialData?.category || "Science"}
-                onValueChange={(value) => setValue('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Science">Science</SelectItem>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="Computer Science">Computer Science</SelectItem>
-                  <SelectItem value="Literature">Literature</SelectItem>
-                  <SelectItem value="Art">Art</SelectItem>
-                  <SelectItem value="Music">Music</SelectItem>
-                  <SelectItem value="History">History</SelectItem>
-                  <SelectItem value="Philosophy">Philosophy</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Type-specific fields */}
-          {renderTypeSpecificFields()}
-          
-          {/* Publication Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="publisher">Publisher</Label>
-              <Input
-                id="publisher"
-                {...register('publisher', { required: true })}
-                className={errors.publisher ? "border-red-500" : ""}
-              />
-              {errors.publisher && <p className="text-red-500 text-sm">Publisher is required</p>}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="published">Publication Date</Label>
-              <Input
-                id="published"
-                type="date"
-                {...register('published', { required: true })}
-                className={errors.published ? "border-red-500" : ""}
-              />
-              {errors.published && <p className="text-red-500 text-sm">Publication date is required</p>}
-            </div>
-          </div>
-          
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...register('description', { required: true })}
-              rows={3}
-              className={errors.description ? "border-red-500" : ""}
-            />
-            {errors.description && <p className="text-red-500 text-sm">Description is required</p>}
-          </div>
-          
-          {/* Digital Status */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="digital"
-                checked={isDigital}
-                onChange={(e) => {
-                  setIsDigital(e.target.checked);
-                  setValue('digital', e.target.checked);
-                }}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="digital">Digital Resource</Label>
-            </div>
-            
-            {isDigital && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="url">URL</Label>
-                  <Input
-                    id="url"
-                    {...register('url')}
-                    placeholder="e.g., https://library.university.edu/ebooks/title"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="fileFormat">File Format</Label>
-                  <Input
-                    id="fileFormat"
-                    {...register('fileFormat')}
-                    placeholder="e.g., PDF, EPUB"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              {...register('location', { required: true })}
-              placeholder={isDigital ? "e.g., Digital Library" : "e.g., A12-S3"}
-              className={errors.location ? "border-red-500" : ""}
-            />
-            {errors.location && <p className="text-red-500 text-sm">Location is required</p>}
-          </div>
-          
-          {/* Language */}
-          <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
-            <Input
-              id="language"
-              {...register('language', { required: true })}
-              defaultValue="English"
-              className={errors.language ? "border-red-500" : ""}
-            />
-            {errors.language && <p className="text-red-500 text-sm">Language is required</p>}
-          </div>
-          
-          {/* Keywords */}
-          <div className="space-y-4">
-            <Label>Keywords</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {keywords.map((keyword) => (
-                <Badge key={keyword} variant="secondary" className="px-3 py-1">
-                  {keyword}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveKeyword(keyword)}
-                    className="ml-2 text-xs"
-                  >
-                    ✕
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <Input
-                value={keywordInput}
-                onChange={(e) => setKeywordInput(e.target.value)}
-                placeholder="Add a keyword"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddKeyword();
-                  }
-                }}
-              />
-              <Button 
-                type="button" 
-                onClick={handleAddKeyword}
-                variant="outline"
-              >
-                Add
-              </Button>
-            </div>
-          </div>
-          
-          {/* Cover URL */}
-          <div className="space-y-2">
-            <Label htmlFor="cover">Cover Image URL</Label>
-            <Input
-              id="cover"
-              {...register('cover', { required: true })}
-              className={errors.cover ? "border-red-500" : ""}
-            />
-            {errors.cover && <p className="text-red-500 text-sm">Cover URL is required</p>}
-          </div>
-          
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full bg-library-accent hover:bg-library-accent-dark"
-          >
-            Save Resource Metadata
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Title of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is the title of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="author"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Author</FormLabel>
+              <FormControl>
+                <Input placeholder="Author of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is the author of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Description of the resource"
+                  className="resize-none"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Write a brief description of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="cover"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cover Image URL</FormLabel>
+              <FormControl>
+                <Input placeholder="URL of the cover image" {...field} />
+              </FormControl>
+              <FormDescription>
+                Provide a URL for the cover image of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <Input placeholder="Category of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Specify the category of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="book">Book</SelectItem>
+                    <SelectItem value="ebook">eBook</SelectItem>
+                    <SelectItem value="journal">Journal</SelectItem>
+                    <SelectItem value="article">Article</SelectItem>
+                    <SelectItem value="audio">Audio</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>
+                Select the type of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="language"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Language</FormLabel>
+              <FormControl>
+                <Input placeholder="Language of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Specify the language of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="publisher"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Publisher</FormLabel>
+              <FormControl>
+                <Input placeholder="Publisher of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the publisher of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="published"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Published Date</FormLabel>
+              <FormControl>
+                <Input placeholder="Published date of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Specify the published date of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Input placeholder="Location of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the location of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isbn"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>ISBN</FormLabel>
+              <FormControl>
+                <Input placeholder="ISBN of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the ISBN of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="issn"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>ISSN</FormLabel>
+              <FormControl>
+                <Input placeholder="ISSN of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the ISSN of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="doi"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>DOI</FormLabel>
+              <FormControl>
+                <Input placeholder="DOI of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the DOI of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="barcode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Barcode</FormLabel>
+              <FormControl>
+                <Input placeholder="Barcode of the resource" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the barcode of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="keywords"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Keywords</FormLabel>
+              <FormControl>
+                <MultiSelect
+                  placeholder="Keywords for the resource"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter keywords for the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="digital"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Digital</FormLabel>
+              <FormControl>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
+                  checked={field.value}
+                  onChange={e => field.onChange(e.target.checked)}
+                />
+              </FormControl>
+              <FormDescription>
+                Is this a digital resource?
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="available"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Available</FormLabel>
+              <FormControl>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
+                  checked={field.value}
+                  onChange={e => field.onChange(e.target.checked)}
+                />
+              </FormControl>
+              <FormDescription>
+                Is this resource currently available?
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="quantity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Quantity</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="Quantity of the resource"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter the quantity of the resource.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Save</Button>
+      </form>
+    </Form>
   );
 };
 

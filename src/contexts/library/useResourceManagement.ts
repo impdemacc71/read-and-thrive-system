@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Resource, Transaction } from '@/data/mockData';
@@ -15,13 +14,14 @@ export function useResourceManagement(
     const newResource: Resource = {
       ...resourceData,
       id: `${resources.length + 1}`,
+      qrId: resourceData.qrId || generateUniqueQRId(),
     };
 
     setResources(prev => [...prev, newResource]);
 
     toast({
       title: "Resource Added",
-      description: `"${resourceData.title}" has been added to the library catalog.`,
+      description: `"${resourceData.title}" has been added to the library catalog with QR code ${newResource.qrId}.`,
     });
   };
 
@@ -62,6 +62,7 @@ export function useResourceManagement(
       (resource.issn && resource.issn.includes(lowerCaseQuery)) ||
       (resource.doi && resource.doi.includes(lowerCaseQuery)) ||
       (resource.barcode && resource.barcode.includes(lowerCaseQuery)) ||
+      (resource.qrId && resource.qrId.toLowerCase().includes(lowerCaseQuery)) ||
       resource.publisher.toLowerCase().includes(lowerCaseQuery) ||
       resource.category.toLowerCase().includes(lowerCaseQuery) ||
       resource.keywords.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
@@ -83,13 +84,14 @@ export function useResourceManagement(
   };
 
   const scanIdentifier = (identifier: string): Resource | undefined => {
-    // Check different identifiers (ISBN, ISSN, DOI, barcode)
+    // Check different identifiers (ISBN, ISSN, DOI, barcode, QR ID)
     return resources.find(
       resource =>
         resource.isbn === identifier ||
         resource.issn === identifier ||
         resource.doi === identifier ||
-        resource.barcode === identifier
+        resource.barcode === identifier ||
+        resource.qrId === identifier
     );
   };
 

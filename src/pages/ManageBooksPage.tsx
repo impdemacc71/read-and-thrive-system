@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
@@ -149,6 +148,7 @@ const ManageBooksPage = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>QR ID</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -176,6 +176,11 @@ const ManageBooksPage = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{resource.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-gray-900 font-mono">
+                        {resource.qrId || 'N/A'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-gray-900">{resource.location}</div>
