@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
+import { Resource } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

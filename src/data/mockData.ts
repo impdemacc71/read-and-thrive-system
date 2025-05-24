@@ -1,3 +1,4 @@
+
 // Mock data for the Library Management System
 
 export type ResourceType = 'book' | 'journal' | 'ebook' | 'article' | 'audio' | 'video' | 'physical' | 'electronic';
@@ -19,6 +20,7 @@ export interface Resource {
   issn?: string;
   doi?: string;
   barcode?: string;
+  qrId?: string;
   publisher: string;
   published: string;
   category: string;
