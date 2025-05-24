@@ -3,20 +3,23 @@ import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Resource, ResourceType } from '@/data/mockData';
 import SearchBar from '@/components/SearchBar';
 import IdentifierScanner from '@/components/IdentifierScanner';
 import MetadataEditor from '@/components/MetadataEditor';
 import EditResourceDialog from '@/components/EditResourceDialog';
+import QRCodePrint from '@/components/QRCodePrint';
 import { 
   Book, 
   FileText, 
   FileAudio, 
   FileVideo,
   Edit,
-  Eye
+  Eye,
+  Plus,
+  QrCode
 } from 'lucide-react';
 import {
   Table,
@@ -33,6 +36,7 @@ const ManageBooksPage = () => {
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState<Resource[]>(resources);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   
   // Extract unique categories and resource types
   const categories = Array.from(new Set(resources.map(resource => resource.category)));
@@ -108,6 +112,7 @@ const ManageBooksPage = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-library-800">Manage Resources</h1>
       
+      {/* Scanner Section */}
       <div className="mb-8">
         <IdentifierScanner 
           onResourceFound={(resource) => {
@@ -115,29 +120,57 @@ const ManageBooksPage = () => {
           }} 
         />
       </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 mb-8">
+        <Button 
+          onClick={() => setShowAddForm(true)}
+          className="bg-green-600 hover:bg-green-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Resource
+        </Button>
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Add New Resource Form */}
-        <div className="lg:col-span-1">
-          <MetadataEditor 
-            onSave={(resourceData) => {
-              addResource({
-                ...resourceData,
-                dateAdded: new Date().toISOString().split('T')[0]
-              } as Omit<Resource, 'id'>);
-            }}
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-8">
+        {/* Add New Resource Form - Separate Section */}
+        {showAddForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Add New Resource</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MetadataEditor 
+                onSave={(resourceData) => {
+                  addResource({
+                    ...resourceData,
+                    dateAdded: new Date().toISOString().split('T')[0]
+                  } as Omit<Resource, 'id'>);
+                  setShowAddForm(false);
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
         
         {/* Resource Inventory */}
-        <div className="lg:col-span-2">
+        <div>
           <h2 className="text-2xl font-semibold mb-4">Resource Inventory</h2>
           
           <div className="mb-6">
             <SearchBar 
               onSearch={handleSearch} 
-              categories={categories}
-              resourceTypes={resourceTypes}
+              categories={Array.from(new Set(resources.map(resource => resource.category)))}
+              resourceTypes={Array.from(new Set(resources.map(resource => resource.type)))}
             />
           </div>
           
@@ -206,6 +239,9 @@ const ManageBooksPage = () => {
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
+                        {(resource as any).qrId && (
+                          <QRCodePrint resource={resource as Resource & { qrId: string }} />
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
