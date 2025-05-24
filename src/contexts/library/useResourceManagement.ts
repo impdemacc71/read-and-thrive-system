@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Resource, Transaction } from '@/data/mockData';
+import { generateUniqueQRId } from '@/utils/qrCodeUtils';
 
 export function useResourceManagement(
   initialResources: Resource[], 
@@ -15,7 +17,7 @@ export function useResourceManagement(
       ...resourceData,
       id: `${resources.length + 1}`,
       qrId: resourceData.qrId || generateUniqueQRId(),
-    };
+    } as Resource;
 
     setResources(prev => [...prev, newResource]);
 
@@ -62,7 +64,7 @@ export function useResourceManagement(
       (resource.issn && resource.issn.includes(lowerCaseQuery)) ||
       (resource.doi && resource.doi.includes(lowerCaseQuery)) ||
       (resource.barcode && resource.barcode.includes(lowerCaseQuery)) ||
-      (resource.qrId && resource.qrId.toLowerCase().includes(lowerCaseQuery)) ||
+      ((resource as any).qrId && (resource as any).qrId.toLowerCase().includes(lowerCaseQuery)) ||
       resource.publisher.toLowerCase().includes(lowerCaseQuery) ||
       resource.category.toLowerCase().includes(lowerCaseQuery) ||
       resource.keywords.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
@@ -91,7 +93,7 @@ export function useResourceManagement(
         resource.issn === identifier ||
         resource.doi === identifier ||
         resource.barcode === identifier ||
-        resource.qrId === identifier
+        (resource as any).qrId === identifier
     );
   };
 

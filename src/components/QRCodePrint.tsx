@@ -9,7 +9,7 @@ import { generateQRCodeForResource } from '@/utils/qrCodeUtils';
 import { Resource } from '@/data/mockData';
 
 interface QRCodePrintProps {
-  resource: Resource;
+  resource: Resource & { qrId?: string };
 }
 
 const QRCodePrint = ({ resource }: QRCodePrintProps) => {
@@ -18,12 +18,12 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen && resource.qrId) {
+    if (isOpen && (resource as any).qrId) {
       generateQRCodeForResource(resource.id)
         .then(setQrCodeImage)
         .catch(console.error);
     }
-  }, [isOpen, resource.id, resource.qrId]);
+  }, [isOpen, resource.id, (resource as any).qrId]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -43,7 +43,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
         <h3 style="margin: 10px 0; font-size: 16px;">${resource.title}</h3>
         <p style="margin: 5px 0; font-size: 12px; color: #666;">by ${resource.author}</p>
         <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px 0;" />
-        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resource.qrId}</p>
+        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${(resource as any).qrId}</p>
         <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view book details</p>
       </div>
     `).join('');
@@ -69,7 +69,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
     printWindow.print();
   };
 
-  if (!resource.qrId) {
+  if (!(resource as any).qrId) {
     return null;
   }
 
@@ -111,7 +111,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
 
           <div className="text-sm text-gray-600">
             <p><strong>Book:</strong> {resource.title}</p>
-            <p><strong>QR ID:</strong> {resource.qrId}</p>
+            <p><strong>QR ID:</strong> {(resource as any).qrId}</p>
           </div>
 
           <Button onClick={handlePrint} className="w-full">

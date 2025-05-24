@@ -119,7 +119,7 @@ const BookDetailsPage = () => {
                 >
                   <Edit className="h-4 w-4 mr-2" /> Edit
                 </Button>
-                <QRCodePrint resource={resource} />
+                <QRCodePrint resource={resource as Resource & { qrId?: string }} />
               </div>
             )}
           </div>
@@ -178,10 +178,10 @@ const BookDetailsPage = () => {
                     <p>{resource.issn}</p>
                   </div>
                 )}
-                {resource.qrId && (
+                {(resource as any).qrId && (
                   <div>
                     <p className="text-sm text-gray-500">QR Code ID</p>
-                    <p>{resource.qrId}</p>
+                    <p>{(resource as any).qrId}</p>
                   </div>
                 )}
               </div>

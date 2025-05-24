@@ -124,7 +124,7 @@ const ManageBooksPage = () => {
               addResource({
                 ...resourceData,
                 dateAdded: new Date().toISOString().split('T')[0]
-              });
+              } as Omit<Resource, 'id'>);
             }}
           />
         </div>
@@ -179,7 +179,7 @@ const ManageBooksPage = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-gray-900 font-mono">
-                        {resource.qrId || 'N/A'}
+                        {(resource as any).qrId || 'N/A'}
                       </div>
                     </TableCell>
                     <TableCell>
