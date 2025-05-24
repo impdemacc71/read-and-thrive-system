@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useLibrary } from '@/contexts/library';
 import { useAuth } from '@/contexts/AuthContext';
@@ -205,6 +206,9 @@ const ManageBooksPage = () => {
                       <div className="flex items-center space-x-1">
                         {getResourceTypeIcon(resource.type)}
                         <span className="text-sm capitalize">{resource.type}</span>
+                        {resource.digital && (
+                          <Badge variant="secondary" className="ml-1 text-xs">Digital</Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -239,9 +243,7 @@ const ManageBooksPage = () => {
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
-                        {(resource as any).qrId && (
-                          <QRCodePrint resource={resource as Resource & { qrId: string }} />
-                        )}
+                        <QRCodePrint resource={resource as Resource & { qrId?: string }} />
                       </div>
                     </TableCell>
                   </TableRow>

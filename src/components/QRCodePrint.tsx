@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QrCode, Printer } from 'lucide-react';
-import { generateQRCodeForResource } from '@/utils/qrCodeUtils';
+import { generateQRCodeForResource, generateUniqueQRId } from '@/utils/qrCodeUtils';
 import { Resource } from '@/data/mockData';
 
 interface QRCodePrintProps {
@@ -16,14 +16,21 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
   const [qrCodeImage, setQrCodeImage] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
+  const [resourceQrId, setResourceQrId] = useState<string>((resource as any).qrId || '');
 
   useEffect(() => {
-    if (isOpen && (resource as any).qrId) {
+    if (isOpen) {
+      // Generate QR ID if it doesn't exist
+      if (!resourceQrId) {
+        const newQrId = generateUniqueQRId();
+        setResourceQrId(newQrId);
+      }
+      
       generateQRCodeForResource(resource.id)
         .then(setQrCodeImage)
         .catch(console.error);
     }
-  }, [isOpen, resource.id, (resource as any).qrId]);
+  }, [isOpen, resource.id, resourceQrId]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -43,8 +50,8 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
         <h3 style="margin: 10px 0; font-size: 16px;">${resource.title}</h3>
         <p style="margin: 5px 0; font-size: 12px; color: #666;">by ${resource.author}</p>
         <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px 0;" />
-        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${(resource as any).qrId}</p>
-        <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view book details</p>
+        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resourceQrId}</p>
+        <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view resource details</p>
       </div>
     `).join('');
 
@@ -69,16 +76,12 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
     printWindow.print();
   };
 
-  if (!(resource as any).qrId) {
-    return null;
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <QrCode className="h-4 w-4 mr-2" />
-          Print QR Code
+          QR Code
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -110,8 +113,8 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
           </div>
 
           <div className="text-sm text-gray-600">
-            <p><strong>Book:</strong> {resource.title}</p>
-            <p><strong>QR ID:</strong> {(resource as any).qrId}</p>
+            <p><strong>Resource:</strong> {resource.title}</p>
+            <p><strong>QR ID:</strong> {resourceQrId || 'Auto-generated'}</p>
           </div>
 
           <Button onClick={handlePrint} className="w-full">

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Transaction } from '@/data/mockData';
+import DigitalPlayer from '@/components/DigitalPlayer';
+import { Play } from 'lucide-react';
 
 const MyBooksPage = () => {
   const { currentUser } = useAuth();
@@ -68,6 +70,7 @@ const MyBooksPage = () => {
           resources={resources}
           onReturn={handleReturn}
           emptyMessage="You don't have any resources borrowed currently."
+          showPlayOption
         />
         
         {/* Overdue resources */}
@@ -80,6 +83,7 @@ const MyBooksPage = () => {
             variant="warning"
             showFines
             calculateFine={calculateFine}
+            showPlayOption
           />
         )}
         
@@ -140,6 +144,7 @@ const ResourcesSection = ({
   showReturnDate = false,
   showFines = false,
   calculateFine,
+  showPlayOption = false,
 }: { 
   title: string;
   transactions: Transaction[];
@@ -150,6 +155,7 @@ const ResourcesSection = ({
   showReturnDate?: boolean;
   showFines?: boolean;
   calculateFine?: (transaction: Transaction) => number;
+  showPlayOption?: boolean;
 }) => {
   let headerClass;
   switch (variant) {
@@ -169,77 +175,66 @@ const ResourcesSection = ({
       {transactions.length === 0 ? (
         <p className="text-gray-500 text-center py-8">{emptyMessage}</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Checkout Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                {showReturnDate && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Date</th>}
-                {showFines && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fine</th>}
-                {onReturn && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {transactions.map((transaction) => {
-                const resource = resources.find(r => r.id === transaction.resourceId);
-                if (!resource) return null;
-                
-                const fine = showFines && calculateFine ? calculateFine(transaction) : 0;
-                
-                return (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 object-cover" src={resource.cover} alt={resource.title} />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-library-800">{resource.title}</div>
-                          <div className="text-sm text-gray-500">{resource.author}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{new Date(transaction.checkoutDate).toLocaleDateString()}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {new Date(transaction.dueDate).toLocaleDateString()}
-                        {transaction.status === 'overdue' && (
-                          <Badge variant="outline" className="ml-2 text-red-600 bg-red-50">Overdue</Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {transactions.map((transaction) => {
+            const resource = resources.find(r => r.id === transaction.resourceId);
+            if (!resource) return null;
+            
+            const fine = showFines && calculateFine ? calculateFine(transaction) : 0;
+            
+            return (
+              <Card key={transaction.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="h-16 w-12 flex-shrink-0">
+                      <img className="h-16 w-12 object-cover rounded" src={resource.cover} alt={resource.title} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-library-800 truncate">{resource.title}</h3>
+                      <p className="text-sm text-gray-500 truncate">{resource.author}</p>
+                      
+                      <div className="mt-2 space-y-1 text-xs text-gray-600">
+                        <p>Borrowed: {new Date(transaction.checkoutDate).toLocaleDateString()}</p>
+                        <p>Due: {new Date(transaction.dueDate).toLocaleDateString()}</p>
+                        {showReturnDate && transaction.returnDate && (
+                          <p>Returned: {new Date(transaction.returnDate).toLocaleDateString()}</p>
                         )}
                       </div>
-                    </td>
-                    {showReturnDate && (
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {transaction.returnDate ? new Date(transaction.returnDate).toLocaleDateString() : '-'}
-                        </div>
-                      </td>
-                    )}
-                    {showFines && (
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-semibold text-red-600">${fine.toFixed(2)}</div>
-                      </td>
-                    )}
-                    {onReturn && (
-                      <td className="px-6 py-4">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => onReturn(transaction.id)}
-                        >
-                          Return
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      
+                      {transaction.status === 'overdue' && (
+                        <Badge variant="outline" className="mt-2 text-red-600 bg-red-50">Overdue</Badge>
+                      )}
+                      
+                      {resource.digital && (
+                        <Badge variant="secondary" className="mt-2 text-xs">Digital</Badge>
+                      )}
+                      
+                      {showFines && fine > 0 && (
+                        <p className="text-sm font-semibold text-red-600 mt-2">${fine.toFixed(2)} fine</p>
+                      )}
+                      
+                      <div className="mt-3 space-y-2">
+                        {showPlayOption && resource.digital && (
+                          <DigitalPlayer resource={resource} />
+                        )}
+                        
+                        {onReturn && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => onReturn(transaction.id)}
+                            className="w-full"
+                          >
+                            Return
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </section>

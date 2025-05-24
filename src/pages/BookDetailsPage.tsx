@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLibrary } from '@/contexts/library';
@@ -10,9 +9,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Edit, BookmarkPlus, ArrowLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, BookmarkPlus, ArrowLeft, Play } from 'lucide-react';
 import EditResourceDialog from '@/components/EditResourceDialog';
 import QRCodePrint from '@/components/QRCodePrint';
+import DigitalPlayer from '@/components/DigitalPlayer';
 
 const BookDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -132,6 +132,9 @@ const BookDetailsPage = () => {
             <Badge variant="outline">{resource.category}</Badge>
             <Badge variant="outline" className="capitalize">{resource.type}</Badge>
             <Badge variant="outline">{resource.language}</Badge>
+            {resource.digital && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">Digital</Badge>
+            )}
             <Badge 
               variant={isResourceAvailable() ? "default" : "outline"}
               className={isResourceAvailable() ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-red-100 text-red-800 hover:bg-red-200"}
@@ -202,13 +205,21 @@ const BookDetailsPage = () => {
                 </div>
               </div>
 
+              {/* Digital Player for digital resources */}
+              {currentUser && resource.digital && (
+                <div className="mb-6 border-t border-gray-200 pt-4">
+                  <h3 className="font-medium text-lg mb-4">Access Digital Content</h3>
+                  <DigitalPlayer resource={resource} />
+                </div>
+              )}
+
               {/* Borrow/Reserve section */}
               {!currentUser ? (
                 <div className="text-center p-4 border-t border-gray-200 mt-4">
                   <p className="mb-4">Please log in to borrow or reserve resources.</p>
                   <Button onClick={() => navigate('/login')}>Log In</Button>
                 </div>
-              ) : isResourceAvailable() ? (
+              ) : !resource.digital && isResourceAvailable() ? (
                 <div className="space-y-6 border-t border-gray-200 pt-4">
                   <h3 className="font-medium text-lg">Borrow This Resource</h3>
                   <div>
@@ -243,7 +254,7 @@ const BookDetailsPage = () => {
                     Borrow This Resource
                   </Button>
                 </div>
-              ) : (
+              ) : !resource.digital && !isResourceAvailable() ? (
                 <div className="space-y-6 border-t border-gray-200 pt-4">
                   <h3 className="font-medium text-lg">Resource Currently Unavailable</h3>
                   <p className="mb-4">This resource is currently borrowed by other users.</p>
@@ -320,7 +331,7 @@ const BookDetailsPage = () => {
                     </Button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         </div>
