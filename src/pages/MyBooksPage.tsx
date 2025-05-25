@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Transaction } from '@/data/mockData';
 import DigitalPlayer from '@/components/DigitalPlayer';
-import { Play } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 const MyBooksPage = () => {
   const { currentUser } = useAuth();
@@ -49,6 +49,25 @@ const MyBooksPage = () => {
   const handleReturn = (transactionId: string) => {
     returnResource(transactionId);
   };
+
+  // Get usage time for a digital resource
+  const getUsageTime = (resourceId: string) => {
+    const savedUsage = localStorage.getItem(`usage-${resourceId}`);
+    if (savedUsage) {
+      const seconds = parseInt(savedUsage, 10);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      } else if (minutes > 0) {
+        return `${minutes}m`;
+      } else {
+        return `${seconds}s`;
+      }
+    }
+    return '0m';
+  };
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -71,6 +90,7 @@ const MyBooksPage = () => {
           onReturn={handleReturn}
           emptyMessage="You don't have any resources borrowed currently."
           showPlayOption
+          getUsageTime={getUsageTime}
         />
         
         {/* Overdue resources */}
@@ -84,6 +104,7 @@ const MyBooksPage = () => {
             showFines
             calculateFine={calculateFine}
             showPlayOption
+            getUsageTime={getUsageTime}
           />
         )}
         
@@ -94,6 +115,7 @@ const MyBooksPage = () => {
             transactions={returned}
             resources={resources}
             showReturnDate
+            getUsageTime={getUsageTime}
           />
         )}
       </div>
@@ -145,6 +167,7 @@ const ResourcesSection = ({
   showFines = false,
   calculateFine,
   showPlayOption = false,
+  getUsageTime,
 }: { 
   title: string;
   transactions: Transaction[];
@@ -156,6 +179,7 @@ const ResourcesSection = ({
   showFines?: boolean;
   calculateFine?: (transaction: Transaction) => number;
   showPlayOption?: boolean;
+  getUsageTime?: (resourceId: string) => string;
 }) => {
   let headerClass;
   switch (variant) {
@@ -181,6 +205,7 @@ const ResourcesSection = ({
             if (!resource) return null;
             
             const fine = showFines && calculateFine ? calculateFine(transaction) : 0;
+            const usageTime = getUsageTime ? getUsageTime(resource.id) : null;
             
             return (
               <Card key={transaction.id} className="hover:shadow-lg transition-shadow">
@@ -199,15 +224,23 @@ const ResourcesSection = ({
                         {showReturnDate && transaction.returnDate && (
                           <p>Returned: {new Date(transaction.returnDate).toLocaleDateString()}</p>
                         )}
+                        {resource.digital && usageTime && (
+                          <div className="flex items-center gap-1 text-blue-600">
+                            <Clock className="h-3 w-3" />
+                            <span>Usage: {usageTime}</span>
+                          </div>
+                        )}
                       </div>
                       
-                      {transaction.status === 'overdue' && (
-                        <Badge variant="outline" className="mt-2 text-red-600 bg-red-50">Overdue</Badge>
-                      )}
-                      
-                      {resource.digital && (
-                        <Badge variant="secondary" className="mt-2 text-xs">Digital</Badge>
-                      )}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {transaction.status === 'overdue' && (
+                          <Badge variant="outline" className="text-red-600 bg-red-50">Overdue</Badge>
+                        )}
+                        
+                        {resource.digital && (
+                          <Badge variant="secondary" className="text-xs">Digital</Badge>
+                        )}
+                      </div>
                       
                       {showFines && fine > 0 && (
                         <p className="text-sm font-semibold text-red-600 mt-2">${fine.toFixed(2)} fine</p>

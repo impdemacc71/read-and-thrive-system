@@ -1,9 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Play, Pause, Volume2, Book, FileText, Music, Video } from 'lucide-react';
+import { Play, Pause, Volume2, Book, FileText, Music, Video, Clock } from 'lucide-react';
 import { Resource } from '@/data/mockData';
+import { useDigitalResourceTracker } from '@/hooks/useDigitalResourceTracker';
 
 interface DigitalPlayerProps {
   resource: Resource;
@@ -12,6 +13,30 @@ interface DigitalPlayerProps {
 const DigitalPlayer = ({ resource }: DigitalPlayerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const { 
+    isActive, 
+    totalTime, 
+    sessionTime, 
+    startTracking, 
+    stopTracking, 
+    formatTime 
+  } = useDigitalResourceTracker(resource.id);
+
+  // Auto start tracking when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      startTracking();
+    } else {
+      stopTracking();
+    }
+  }, [isOpen]);
+
+  // Stop tracking when component unmounts
+  useEffect(() => {
+    return () => {
+      stopTracking();
+    };
+  }, []);
 
   const getPlayerIcon = () => {
     switch (resource.type) {
@@ -88,7 +113,12 @@ const DigitalPlayer = ({ resource }: DigitalPlayerProps) => {
             
             {resource.url ? (
               <div className="space-y-4">
-                <audio controls className="w-full">
+                <audio 
+                  controls 
+                  className="w-full"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                >
                   <source src={resource.url} type="audio/mpeg" />
                   <source src={resource.url} type="audio/wav" />
                   Your browser does not support the audio element.
@@ -130,7 +160,13 @@ const DigitalPlayer = ({ resource }: DigitalPlayerProps) => {
           <div className="space-y-4">
             {resource.url ? (
               <div className="space-y-4">
-                <video controls className="w-full rounded-lg" style={{ maxHeight: '400px' }}>
+                <video 
+                  controls 
+                  className="w-full rounded-lg" 
+                  style={{ maxHeight: '400px' }}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                >
                   <source src={resource.url} type="video/mp4" />
                   <source src={resource.url} type="video/avi" />
                   Your browser does not support the video tag.
@@ -196,9 +232,24 @@ const DigitalPlayer = ({ resource }: DigitalPlayerProps) => {
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Volume2 className="h-5 w-5" />
-            {resource.title}
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Volume2 className="h-5 w-5" />
+              {resource.title}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Session: {formatTime(sessionTime)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Total: {formatTime(totalTime)}</span>
+              </div>
+              {isActive && (
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
         <div className="mt-4">
