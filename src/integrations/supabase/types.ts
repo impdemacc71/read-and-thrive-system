@@ -9,129 +9,16 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      booking_requests: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string | null
-          name: string
-          payment_amount: number | null
-          payment_method: string | null
-          payment_status: Database["public"]["Enums"]["payment_status"]
-          phone: string | null
-          service: string[]
-          status: Database["public"]["Enums"]["booking_status"]
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message?: string | null
-          name: string
-          payment_amount?: number | null
-          payment_method?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"]
-          phone?: string | null
-          service: string[]
-          status?: Database["public"]["Enums"]["booking_status"]
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string | null
-          name?: string
-          payment_amount?: number | null
-          payment_method?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"]
-          phone?: string | null
-          service?: string[]
-          status?: Database["public"]["Enums"]["booking_status"]
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      expenses: {
-        Row: {
-          amount: number
-          category: string
-          created_at: string
-          description: string | null
-          expense_date: string
-          id: string
-        }
-        Insert: {
-          amount: number
-          category: string
-          created_at?: string
-          description?: string | null
-          expense_date: string
-          id?: string
-        }
-        Update: {
-          amount?: number
-          category?: string
-          created_at?: string
-          description?: string | null
-          expense_date?: string
-          id?: string
-        }
-        Relationships: []
-      }
-      gallery_items: {
-        Row: {
-          after_image_url: string
-          before_image_url: string
-          created_at: string
-          display_order: number | null
-          id: string
-          title: string
-        }
-        Insert: {
-          after_image_url: string
-          before_image_url: string
-          created_at?: string
-          display_order?: number | null
-          id?: string
-          title: string
-        }
-        Update: {
-          after_image_url?: string
-          before_image_url?: string
-          created_at?: string
-          display_order?: number | null
-          id?: string
-          title?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_daily_dashboard_stats: {
-        Args: { start_date: string; end_date: string }
-        Returns: {
-          day: string
-          total_orders: number
-          completed_orders: number
-          revenue: number
-          expenses: number
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
-      booking_status:
-        | "pending"
-        | "confirmed"
-        | "in_progress"
-        | "completed"
-        | "cancelled"
-      payment_status: "unpaid" | "paid"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -246,15 +133,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      booking_status: [
-        "pending",
-        "confirmed",
-        "in_progress",
-        "completed",
-        "cancelled",
-      ],
-      payment_status: ["unpaid", "paid"],
-    },
+    Enums: {},
   },
 } as const
