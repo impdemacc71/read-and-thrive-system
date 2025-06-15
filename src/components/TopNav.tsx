@@ -22,7 +22,7 @@ const TopNav = () => {
       
       <div className="flex items-center gap-3">
         <span className="text-sm mr-2 hidden sm:inline">
-          {currentUser?.name}
+          {currentUser?.full_name}
         </span>
 
         <DropdownMenu>
@@ -39,7 +39,7 @@ const TopNav = () => {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="flex justify-between">
-              <span>{currentUser?.name}</span>
+              <span>{currentUser?.full_name}</span>
               <span className="bg-library-100 text-library-600 px-2 py-0.5 rounded text-xs font-medium">
                 {currentUser?.role}
               </span>

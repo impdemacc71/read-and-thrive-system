@@ -54,7 +54,7 @@ const Navbar = () => {
               
               <div className="flex items-center gap-3">
                 <span className="hidden md:inline text-sm text-library-500">
-                  {currentUser?.name} ({currentUser?.role})
+                  {currentUser?.full_name} ({currentUser?.role})
                 </span>
                 <Button variant="outline" size="sm" onClick={logout}>
                   Logout

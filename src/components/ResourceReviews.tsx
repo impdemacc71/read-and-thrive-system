@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +59,7 @@ const ResourceReviews = ({ resourceId }: ResourceReviewsProps) => {
     const newReview: Review = {
       id: Date.now().toString(),
       userId: currentUser.id,
-      userName: currentUser.name,
+      userName: currentUser.full_name || "Anonymous User",
       rating: newRating,
       comment: newComment,
       date: new Date().toLocaleDateString()
