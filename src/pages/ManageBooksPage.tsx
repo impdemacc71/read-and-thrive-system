@@ -13,6 +13,7 @@ import MetadataEditor from '@/components/MetadataEditor';
 import EditResourceDialog from '@/components/EditResourceDialog';
 import QRCodePrint from '@/components/QRCodePrint';
 import { 
+  Barcode,
   Book, 
   FileText, 
   FileAudio, 
@@ -182,7 +183,18 @@ const ManageBooksPage = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>QR ID</TableHead>
+                  <TableHead>
+                    <div className="flex items-center">
+                      <Barcode className="h-4 w-4 mr-1" />
+                      Barcode
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center">
+                      <QrCode className="h-4 w-4 mr-1" />
+                      QR ID
+                    </div>
+                  </TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -213,6 +225,11 @@ const ManageBooksPage = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{resource.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-gray-900 font-mono">
+                        {(resource as any).barcode || 'N/A'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-gray-900 font-mono">
