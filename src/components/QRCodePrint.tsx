@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,13 +55,27 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
     }
   }, [isOpen, resource, resourceQrId]);
 
-  const handlePrint = () => {
+  const handlePrint = (type: 'qr' | 'barcode') => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const barcodeHtml = barcodeImage
-      ? `<img src="${barcodeImage}" alt="Barcode" style="display: block; margin: 10px auto;" />`
-      : `<p style="margin: 5px 0; font-size: 12px; font-weight: bold; font-family: monospace;">Barcode: ${(resource as any).barcode || 'N/A'}</p>`;
+    let contentToPrint = '';
+    let printJobTitle = '';
+
+    if (type === 'qr') {
+      if (!qrCodeImage) return;
+      contentToPrint = `
+        <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px auto; display: block;" />
+        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resourceQrId}</p>
+      `;
+      printJobTitle = `QR Labels - ${resource.title}`;
+    } else if (type === 'barcode') {
+      if (!(resource as any).barcode) return;
+      contentToPrint = barcodeImage
+        ? `<img src="${barcodeImage}" alt="Barcode" style="display: block; margin: 10px auto;" />`
+        : `<p style="margin: 5px 0; font-size: 12px; font-weight: bold; font-family: monospace;">Barcode: ${(resource as any).barcode}</p>`;
+      printJobTitle = `Barcode Labels - ${resource.title}`;
+    }
 
     const printContent = Array.from({ length: quantity }, (_, index) => `
       <div style="
@@ -77,9 +90,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
       ">
         <h3 style="margin: 10px 0; font-size: 16px;">${resource.title}</h3>
         <p style="margin: 5px 0; font-size: 12px; color: #666;">by ${resource.author}</p>
-        <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px auto; display: block;" />
-        <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resourceQrId}</p>
-        ${barcodeHtml}
+        ${contentToPrint}
         <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view resource details</p>
       </div>
     `).join('');
@@ -87,7 +98,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>QR & Barcode Labels - ${resource.title}</title>
+          <title>${printJobTitle}</title>
           <style>
             body { margin: 0; padding: 20px; }
             @media print {
@@ -160,10 +171,24 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
             <p><strong>Barcode:</strong> <span className="font-mono">{(resource as any).barcode || 'N/A'}</span></p>
           </div>
 
-          <Button onClick={handlePrint} className="w-full">
-            <Printer className="h-4 w-4 mr-2" />
-            Print {quantity} Label{quantity > 1 ? 's' : ''}
-          </Button>
+          <div className="flex w-full flex-col sm:flex-row gap-2">
+            <Button
+              onClick={() => handlePrint('qr')}
+              className="w-full"
+              disabled={!qrCodeImage}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print {quantity} QR Label{quantity > 1 ? 's' : ''}
+            </Button>
+            <Button
+              onClick={() => handlePrint('barcode')}
+              className="w-full"
+              disabled={!(resource as any).barcode}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print {quantity} Barcode Label{quantity > 1 ? 's' : ''}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
