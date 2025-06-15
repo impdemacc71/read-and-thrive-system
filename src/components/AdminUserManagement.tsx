@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -10,24 +9,60 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { User } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, Users, Search, X } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminUserManagementProps {
   users: User[];
-  addUser: (user: Omit<User, 'id'>) => void;
 }
 
-const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUser }) => {
+const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createUserMutation = useMutation({
+    mutationFn: async ({ email, password, fullName, role }: any) => {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, fullName, role },
+      });
+
+      if (error) throw new Error(error.message);
+      // The edge function might return a user-friendly error in the data object
+      if (data.error) throw new Error(data.error);
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "User Created",
+        description: `Successfully created user: ${name} (${email})`,
+      });
+      // Reset form
+      setEmail('');
+      setName('');
+      setPassword('');
+      setRole('student');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleCreateUser = () => {
-    if (!email || !name) {
+    if (!email || !name || !password) {
       toast({
         title: "Missing Information",
-        description: "Please provide a name and email.",
+        description: "Please provide a name, email, and password.",
         variant: "destructive"
       });
       return;
@@ -42,7 +77,6 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUse
       return;
     }
 
-    // Check for existing user with same email
     if (users.some(user => user.email === email)) {
       toast({
         title: "User Exists",
@@ -51,25 +85,8 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUse
       });
       return;
     }
-
-    const newUser = {
-      email,
-      name,
-      role: role as 'admin' | 'librarian' | 'student',
-      fines: 0, // Initialize with zero fines
-    };
-
-    addUser(newUser);
     
-    // Reset form
-    setEmail('');
-    setName('');
-    setRole('student');
-    
-    toast({
-      title: "User Created",
-      description: `Successfully created user: ${name} (${email})`,
-    });
+    createUserMutation.mutate({ email, password, fullName: name, role });
   };
 
   // Filter users based on search query
@@ -184,7 +201,7 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUse
               Create New User
             </CardTitle>
             <CardDescription>
-              Add a new user to the system
+              Add a new user to the system by providing their details and a temporary password.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -210,25 +227,42 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, addUse
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">User Role</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="librarian">Librarian</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">User Role</Label>
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="librarian">Librarian</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Button 
                 onClick={handleCreateUser} 
                 className="w-full"
+                disabled={createUserMutation.isPending}
               >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Create User
+                {createUserMutation.isPending ? 'Creating...' : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create User
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

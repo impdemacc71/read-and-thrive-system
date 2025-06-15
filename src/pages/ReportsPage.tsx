@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +11,10 @@ import { Resource, Transaction, User } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import AdminUserManagement from '@/components/AdminUserManagement';
 import UserFinesManagement from '@/components/UserFinesManagement';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/contexts/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Dummy function to add a user (would connect to authentication system in a real app)
 const addUser = (newUser: Omit<User, 'id'>) => {
@@ -27,13 +30,27 @@ const ReportsPage = () => {
   const { toast } = useToast();
   const [timeframe, setTimeframe] = useState('month');
   
-  // Mock users for demo purposes with added fines property
-  const users: User[] = [
-    { id: '1', name: 'Admin User', email: 'admin@university.edu', role: 'admin', fines: 0 },
-    { id: '2', name: 'Librarian User', email: 'librarian@university.edu', role: 'librarian', fines: 0 },
-    { id: '3', name: 'Student One', email: 'student1@university.edu', role: 'student', fines: 5 },
-    { id: '4', name: 'Student Two', email: 'student2@university.edu', role: 'student', fines: 10 }
-  ];
+  // Fetch users from Supabase
+  const { data: profiles, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data as Profile[];
+    },
+    enabled: !!currentUser, // Fetch users if logged in
+  });
+  
+  // Map fetched profiles to the User type expected by child components
+  const users: User[] = (profiles || []).map(p => ({
+    id: p.id,
+    name: p.full_name || '',
+    email: p.email || '',
+    role: p.role,
+    fines: p.fines || 0,
+  }));
   
   // Check if user has librarian or admin role
   if (!currentUser || (currentUser.role !== 'librarian' && currentUser.role !== 'admin')) {
@@ -303,10 +320,22 @@ const ReportsPage = () => {
         
         {currentUser.role === 'admin' && (
           <TabsContent value="users">
-            <AdminUserManagement 
-              users={users}
-              addUser={addUser}
-            />
+            {isLoadingUsers ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Loading Users...</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </CardContent>
+              </Card>
+            ) : (
+              <AdminUserManagement 
+                users={users}
+              />
+            )}
           </TabsContent>
         )}
       </Tabs>
