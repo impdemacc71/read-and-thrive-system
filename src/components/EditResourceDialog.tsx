@@ -14,8 +14,8 @@ interface EditResourceDialogProps {
 const EditResourceDialog = ({ resource, isOpen, onClose }: EditResourceDialogProps) => {
   const { updateResource } = useLibrary();
   
-  const handleSave = (data: Omit<Resource, 'id'>) => {
-    const success = updateResource(resource.id, data);
+  const handleSave = async (data: Omit<Resource, 'id'>) => {
+    const success = await updateResource(resource.id, data);
     if (success) {
       onClose();
     }
