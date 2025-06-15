@@ -51,6 +51,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
         <p style="margin: 5px 0; font-size: 12px; color: #666;">by ${resource.author}</p>
         <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px 0;" />
         <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resourceQrId}</p>
+        <p style="margin: 5px 0; font-size: 12px; font-weight: bold; font-family: monospace;">Barcode: ${(resource as any).barcode || 'N/A'}</p>
         <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view resource details</p>
       </div>
     `).join('');
@@ -112,9 +113,10 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
             />
           </div>
 
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 space-y-1">
             <p><strong>Resource:</strong> {resource.title}</p>
             <p><strong>QR ID:</strong> {resourceQrId || 'Auto-generated'}</p>
+            <p><strong>Barcode:</strong> <span className="font-mono">{(resource as any).barcode || 'N/A'}</span></p>
           </div>
 
           <Button onClick={handlePrint} className="w-full">
