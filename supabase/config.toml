@@ -1,1 +1,5 @@
+
 project_id = "axujvekzqtlshmdubrjw"
+
+[functions.login-with-password]
+# No specific config needed for now, but this registers the function.

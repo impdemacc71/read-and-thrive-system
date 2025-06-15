@@ -9,7 +9,159 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          email: string | null
+          fines: number | null
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          email?: string | null
+          fines?: number | null
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          email?: string | null
+          fines?: number | null
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          author: string
+          available: boolean | null
+          barcode: string | null
+          category: string | null
+          cover: string | null
+          date_added: string | null
+          description: string | null
+          doi: string | null
+          edition: string | null
+          file_format: string | null
+          id: string
+          is_digital: boolean | null
+          isbn: string | null
+          issn: string | null
+          keywords: string[] | null
+          language: string | null
+          location: string | null
+          pages: number | null
+          published_date: string | null
+          publisher: string | null
+          qr_id: string | null
+          quantity: number | null
+          title: string
+          type: Database["public"]["Enums"]["resource_type"]
+          url: string | null
+        }
+        Insert: {
+          author: string
+          available?: boolean | null
+          barcode?: string | null
+          category?: string | null
+          cover?: string | null
+          date_added?: string | null
+          description?: string | null
+          doi?: string | null
+          edition?: string | null
+          file_format?: string | null
+          id?: string
+          is_digital?: boolean | null
+          isbn?: string | null
+          issn?: string | null
+          keywords?: string[] | null
+          language?: string | null
+          location?: string | null
+          pages?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          qr_id?: string | null
+          quantity?: number | null
+          title: string
+          type: Database["public"]["Enums"]["resource_type"]
+          url?: string | null
+        }
+        Update: {
+          author?: string
+          available?: boolean | null
+          barcode?: string | null
+          category?: string | null
+          cover?: string | null
+          date_added?: string | null
+          description?: string | null
+          doi?: string | null
+          edition?: string | null
+          file_format?: string | null
+          id?: string
+          is_digital?: boolean | null
+          isbn?: string | null
+          issn?: string | null
+          keywords?: string[] | null
+          language?: string | null
+          location?: string | null
+          pages?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          qr_id?: string | null
+          quantity?: number | null
+          title?: string
+          type?: Database["public"]["Enums"]["resource_type"]
+          url?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          checkout_date: string | null
+          due_date: string | null
+          id: string
+          resource_id: string
+          return_date: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Insert: {
+          checkout_date?: string | null
+          due_date?: string | null
+          id?: string
+          resource_id: string
+          return_date?: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Update: {
+          checkout_date?: string | null
+          due_date?: string | null
+          id?: string
+          resource_id?: string
+          return_date?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +170,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "librarian" | "admin"
+      resource_type:
+        | "book"
+        | "journal"
+        | "ebook"
+        | "article"
+        | "audio"
+        | "video"
+        | "physical"
+        | "electronic"
+      transaction_status: "borrowed" | "returned" | "overdue" | "reserved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +295,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "librarian", "admin"],
+      resource_type: [
+        "book",
+        "journal",
+        "ebook",
+        "article",
+        "audio",
+        "video",
+        "physical",
+        "electronic",
+      ],
+      transaction_status: ["borrowed", "returned", "overdue", "reserved"],
+    },
   },
 } as const

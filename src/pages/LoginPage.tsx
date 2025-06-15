@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { users } from '@/data/mockData';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -37,7 +36,7 @@ const LoginPage = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">UniLib Login</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access the library system
+              Enter your credentials to access the library system. You can sign up through the Supabase dashboard.
             </CardDescription>
           </CardHeader>
 
@@ -73,31 +72,11 @@ const LoginPage = () => {
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
             </form>
-
-            <div className="mt-6">
-              <p className="text-sm text-center text-gray-500">
-                Demo accounts (use any password):
-              </p>
-              <div className="mt-2 grid grid-cols-1 gap-2">
-                {users.map(user => (
-                  <Button
-                    key={user.id}
-                    variant="outline"
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => setEmail(user.email)}
-                  >
-                    <span className="mr-2">{user.email}</span>
-                    <Badge role={user.role} />
-                  </Button>
-                ))}
-              </div>
-            </div>
           </CardContent>
 
           <CardFooter className="flex justify-center">
             <p className="text-xs text-gray-500">
-              This is a demo application. No real authentication is performed.
+              Authentication is now handled by Supabase.
             </p>
           </CardFooter>
         </Card>
@@ -117,26 +96,6 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-const Badge = ({ role }: { role: string }) => {
-  let bgColor;
-  switch (role) {
-    case 'admin':
-      bgColor = 'bg-red-100 text-red-800';
-      break;
-    case 'librarian':
-      bgColor = 'bg-blue-100 text-blue-800';
-      break;
-    default:
-      bgColor = 'bg-green-100 text-green-800';
-  }
-
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${bgColor}`}>
-      {role}
-    </span>
   );
 };
 
