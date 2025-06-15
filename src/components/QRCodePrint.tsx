@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QrCode, Printer } from 'lucide-react';
+import JsBarcode from 'jsbarcode';
 import { generateQRCodeForResource, generateUniqueQRId } from '@/utils/qrCodeUtils';
 import { Resource } from '@/data/mockData';
 
@@ -14,6 +15,7 @@ interface QRCodePrintProps {
 
 const QRCodePrint = ({ resource }: QRCodePrintProps) => {
   const [qrCodeImage, setQrCodeImage] = useState<string>('');
+  const [barcodeImage, setBarcodeImage] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
   const [resourceQrId, setResourceQrId] = useState<string>((resource as any).qrId || '');
@@ -29,12 +31,38 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
       generateQRCodeForResource(resource.id)
         .then(setQrCodeImage)
         .catch(console.error);
+      
+      // Generate Barcode image
+      const barcodeValue = (resource as any).barcode;
+      if (barcodeValue) {
+        try {
+          const canvas = document.createElement('canvas');
+          JsBarcode(canvas, barcodeValue, {
+            format: 'CODE128',
+            displayValue: true,
+            fontSize: 18,
+            margin: 10,
+            height: 60,
+            width: 2,
+          });
+          setBarcodeImage(canvas.toDataURL('image/png'));
+        } catch (error) {
+          console.error("Failed to generate barcode:", error);
+          setBarcodeImage('');
+        }
+      } else {
+        setBarcodeImage('');
+      }
     }
-  }, [isOpen, resource.id, resourceQrId]);
+  }, [isOpen, resource, resourceQrId]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+
+    const barcodeHtml = barcodeImage
+      ? `<img src="${barcodeImage}" alt="Barcode" style="display: block; margin: 10px auto;" />`
+      : `<p style="margin: 5px 0; font-size: 12px; font-weight: bold; font-family: monospace;">Barcode: ${(resource as any).barcode || 'N/A'}</p>`;
 
     const printContent = Array.from({ length: quantity }, (_, index) => `
       <div style="
@@ -49,9 +77,9 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
       ">
         <h3 style="margin: 10px 0; font-size: 16px;">${resource.title}</h3>
         <p style="margin: 5px 0; font-size: 12px; color: #666;">by ${resource.author}</p>
-        <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px 0;" />
+        <img src="${qrCodeImage}" alt="QR Code" style="width: 150px; height: 150px; margin: 10px auto; display: block;" />
         <p style="margin: 5px 0; font-size: 12px; font-weight: bold;">QR ID: ${resourceQrId}</p>
-        <p style="margin: 5px 0; font-size: 12px; font-weight: bold; font-family: monospace;">Barcode: ${(resource as any).barcode || 'N/A'}</p>
+        ${barcodeHtml}
         <p style="margin: 5px 0; font-size: 10px; color: #666;">Scan to view resource details</p>
       </div>
     `).join('');
@@ -59,7 +87,7 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>QR Code Labels - ${resource.title}</title>
+          <title>QR & Barcode Labels - ${resource.title}</title>
           <style>
             body { margin: 0; padding: 20px; }
             @media print {
@@ -82,22 +110,35 @@ const QRCodePrint = ({ resource }: QRCodePrintProps) => {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <QrCode className="h-4 w-4 mr-2" />
-          QR Code
+          QR/Barcode
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Print QR Code Labels</DialogTitle>
+          <DialogTitle>Print QR & Barcode Labels</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="text-center">
+          <div className="grid grid-cols-1 gap-4 text-center">
             {qrCodeImage && (
-              <img 
-                src={qrCodeImage} 
-                alt="QR Code Preview" 
-                className="mx-auto border rounded"
-                style={{ width: '200px', height: '200px' }}
-              />
+              <div className="p-2 border rounded-lg">
+                <Label className="text-xs text-muted-foreground">QR Code</Label>
+                <img 
+                  src={qrCodeImage} 
+                  alt="QR Code Preview" 
+                  className="mx-auto bg-white p-1"
+                  style={{ width: '150px', height: '150px' }}
+                />
+              </div>
+            )}
+            {barcodeImage && (
+              <div className="p-2 border rounded-lg">
+                <Label className="text-xs text-muted-foreground">Barcode</Label>
+                <img 
+                  src={barcodeImage} 
+                  alt="Barcode Preview" 
+                  className="mx-auto bg-white p-2"
+                />
+              </div>
             )}
           </div>
           
