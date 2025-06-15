@@ -15,7 +15,7 @@ import {
   SidebarSeparator,
   useSidebar
 } from "@/components/ui/sidebar";
-import { Book, BookOpen, LayoutDashboard, Library, LineChart, LogOut } from "lucide-react";
+import { Book, BookOpen, LayoutDashboard, Library, LineChart, LogOut, Users } from "lucide-react";
 import { Button } from "./ui/button";
 
 const AppSidebar = () => {
@@ -83,6 +83,16 @@ const AppSidebar = () => {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  {currentUser?.role === 'admin' && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={isActive("/user-management")}>
+                        <Link to="/user-management">
+                          <Users className="mr-2" />
+                          <span>Users</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                 </>
               )}
             </SidebarMenu>

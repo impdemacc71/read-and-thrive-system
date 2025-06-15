@@ -10,6 +10,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import NotFound from "@/pages/NotFound";
 import AppSidebar from "./AppSidebar";
 import TopNav from "./TopNav";
+import UserManagementPage from "@/pages/UserManagementPage";
 
 const AppLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -31,6 +32,7 @@ const AppLayout = () => {
             <Route path="/my-books" element={<MyBooksPage />} />
             <Route path="/manage-books" element={<ManageBooksPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/user-management" element={<UserManagementPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
