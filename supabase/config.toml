@@ -1,5 +1,5 @@
 
 project_id = "axujvekzqtlshmdubrjw"
 
-[functions.login-with-password]
-# No specific config needed for now, but this registers the function.
+[functions.create-user]
+# This function is used to create users from the admin panel.

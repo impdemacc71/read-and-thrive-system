@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,40 +82,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Call our edge function to perform login
-    const { data: functionData, error } = await supabase.functions.invoke('login-with-password', {
-        body: { email, password },
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
     if (error) {
       toast({
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
       return false;
     }
-    
-    const { session, error: signInError } = functionData;
 
-    if (signInError) {
-       toast({
-        title: "Login Failed",
-        description: signInError.message || "Invalid email or password.",
-        variant: "destructive",
+    if (data.session) {
+      // The onAuthStateChange listener will automatically fetch the profile
+      toast({
+        title: "Login Successful",
+        description: `Welcome back!`,
       });
-      return false;
+      return true;
     }
     
-    // Manually set the session on the client
-    await supabase.auth.setSession(session);
-
-    // The onAuthStateChange listener will automatically fetch the profile
-    toast({
-      title: "Login Successful",
-      description: `Welcome back!`,
-    });
-    return true;
+    return false;
   };
 
   const logout = async () => {
